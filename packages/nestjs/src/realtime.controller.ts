@@ -6,7 +6,6 @@ import {
   Inject,
   InternalServerErrorException,
   NotFoundException,
-  Param,
   Post,
   Query,
   Req,
@@ -48,6 +47,14 @@ class DataArrayDto {
   @IsArray()
   @IsObject({ each: true })
   data: any[];
+}
+
+class UpdateIdDto {
+  @IsString()
+  _id: string;
+
+  @IsObject({ each: false })
+  update: UpdateQuery<any>;
 }
 
 class UpdateSingleDto {
@@ -123,11 +130,11 @@ export class RealtimeController {
     return results;
   }
 
-  @Post('findById/:id')
+  @Post('findById')
   async findById(
     @Req() req: Request,
     @Query() query: RealtimeQuery,
-    @Param('id') { _id }: ObjectIdDto,
+    @Body() { _id }: ObjectIdDto,
   ) {
     const model = this.databaseService.resolveModel(
       query.collection,
@@ -202,7 +209,29 @@ export class RealtimeController {
       this.mergeFilters(filter, guardFilter);
     }
 
-    const result = model.findOneAndUpdate(filter, update, { new: true });
+    const result = await model.findOneAndUpdate(filter, update, { new: true });
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
+  @Post('findByIdAndUpdate')
+  async findByIdAndUpdate(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { _id, update }: UpdateIdDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const filter: FilterQuery<any> = { _id };
+    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    const result = await model.findOneAndUpdate(filter, update, { new: true });
     if (!result) throw new NotFoundException();
     return result;
   }
