@@ -7,18 +7,21 @@ import {
   Post,
   Query,
   Req,
-} from "@nestjs/common";
-import { FilterQuery } from "mongoose";
-import { Request } from "express";
-import { RealtimeService } from "./services/realtime.service";
-import { WebsocketQuery } from "./dto/websocket.query";
-import { Return } from "./realtime.types";
+  SetMetadata,
+} from '@nestjs/common';
+import type { FilterQuery } from 'mongoose';
+import type { Request } from 'express';
+import { RealtimeService } from './services/realtime.service';
+import { WebsocketQuery } from './dto/websocket.query';
+import type { Return } from './realtime.types';
+import { METADATA_REALTIME_CONTROLLER } from './realtime.constants';
 
-@Controller("database")
+@Controller('database')
+@SetMetadata(METADATA_REALTIME_CONTROLLER, true)
 export class RealtimeController {
   constructor(private readonly databaseService: RealtimeService) {}
 
-  @Post("findOne")
+  @Post('findOne')
   async findOne(
     @Req() req: Request,
     @Query() query: WebsocketQuery,
@@ -33,7 +36,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post("find")
+  @Post('find')
   async find(
     @Req() req: Request,
     @Query() query: WebsocketQuery,
@@ -46,7 +49,7 @@ export class RealtimeController {
     return this.executeOrThrow(() => model.find(body).exec());
   }
 
-  @Post("findById")
+  @Post('findById')
   async findById(
     @Req() req: Request,
     @Query() query: WebsocketQuery,
@@ -63,7 +66,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post("insert")
+  @Post('insert')
   async insert(
     @Req() req: Request,
     @Query() query: WebsocketQuery,
@@ -76,7 +79,7 @@ export class RealtimeController {
     return this.executeOrThrow(() => model.create(body));
   }
 
-  @Post("insertMany")
+  @Post('insertMany')
   async insertMany(
     @Req() req: Request,
     @Query() query: WebsocketQuery,

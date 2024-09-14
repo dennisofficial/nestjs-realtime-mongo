@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
-import { RealtimeModule } from "@dl-tech/realtime-mongo-nestjs";
+import { REALTIME_GUARD, RealtimeModule } from "@dl-tech/realtime-mongo-nestjs";
 import { BullModule } from "@nestjs/bullmq";
 import { DatabaseEventService } from "@/database-event.service";
 import { UserModel, UserSchema } from "@/schemas/user.model";
+import { APP_GUARD } from "@nestjs/core";
+import { AppGuard } from "@/app.guard";
 
 @Module({
   imports: [
@@ -22,9 +24,19 @@ import { UserModel, UserSchema } from "@/schemas/user.model";
     RealtimeModule.forRoot({
       enableRestApi: true,
       enableWebsocket: true,
-      enableEventEmitter: true,
+      websocketGuard: AppGuard,
     }),
   ],
-  providers: [DatabaseEventService],
+  providers: [
+    DatabaseEventService,
+    {
+      provide: APP_GUARD,
+      useClass: AppGuard,
+    },
+    {
+      provide: REALTIME_GUARD,
+      useClass: AppGuard,
+    },
+  ],
 })
 export class AppModule {}

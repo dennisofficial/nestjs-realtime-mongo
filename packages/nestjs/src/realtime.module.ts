@@ -1,6 +1,12 @@
-import { DynamicModule, Inject, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  DynamicModule,
+  Inject,
+  Logger,
+  OnModuleInit,
+  UseGuards,
+} from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import type { Connection } from 'mongoose';
 import { RealtimeController } from './realtime.controller';
 import { StreamService } from './services/stream.service';
 import { SessionService } from './services/session.service';
@@ -44,16 +50,16 @@ export class RealtimeModule implements OnModuleInit {
       exports: [],
     };
 
-    if (options.imports) {
-      module.imports.push(...options.imports);
-    }
-
     if (options.enableRestApi) {
       module.controllers.push(RealtimeController);
     }
 
     if (options.enableWebsocket) {
-      module.providers.push(RealtimeGateway);
+      const gateway = RealtimeGateway;
+      if (options.websocketGuard) {
+        UseGuards(options.websocketGuard)(gateway);
+      }
+      module.providers.push(gateway);
     }
 
     return module;

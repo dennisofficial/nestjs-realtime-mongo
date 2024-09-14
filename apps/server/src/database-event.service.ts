@@ -7,6 +7,6 @@ import {
 @ChangeStreamListener()
 export class DatabaseEventService extends RealtimeEventHandler {
   onChangeEvent = async (data: RealtimeMongoEvent) => {
-    console.log("REALTIME EVENT", data);
+    // Do something with data
   };
 }

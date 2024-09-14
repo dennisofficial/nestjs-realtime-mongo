@@ -12,8 +12,8 @@ import {
   UseFilters,
   ValidationPipe,
 } from '@nestjs/common';
-import { Connection, FilterQuery } from 'mongoose';
-import { Namespace } from 'socket.io';
+import type { Connection, FilterQuery } from 'mongoose';
+import type { Namespace } from 'socket.io';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { RealtimeFilter } from './realtime.filter';

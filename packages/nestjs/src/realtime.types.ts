@@ -1,5 +1,5 @@
-import { FilterQuery } from 'mongoose';
-import { Socket } from 'socket.io';
+import type { FilterQuery } from 'mongoose';
+import type { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import {
   ChangeStreamDeleteDocument,
@@ -51,4 +51,8 @@ export interface RealtimeMongoSession {
 
 export abstract class RealtimeEventHandler {
   abstract onChangeEvent(data: RealtimeMongoEvent): void | Promise<void>;
+}
+
+export interface CanRealtimeActivate {
+  canRealtimeActivate: (socket: Socket) => boolean | Promise<boolean>;
 }

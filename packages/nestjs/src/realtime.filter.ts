@@ -4,11 +4,10 @@ import {
   ExceptionFilter,
   HttpException,
   UnprocessableEntityException,
-} from "@nestjs/common";
-import { BaseExceptionFilter } from "@nestjs/core";
-import { Error } from "mongoose";
-import { Response } from "express";
-import { MongoServerError } from "mongodb";
+} from '@nestjs/common';
+import { BaseExceptionFilter } from '@nestjs/core';
+import type { Response } from 'express';
+import type { MongoServerError } from 'mongodb';
 
 @Catch()
 export class RealtimeFilter
@@ -28,13 +27,6 @@ export class RealtimeFilter
       }
     }
 
-    if (exception instanceof Error.ValidationError) {
-      return this.replyError(
-        new UnprocessableEntityException(exception.message),
-        host,
-      );
-    }
-
     return super.catch(exception, host);
   }
 
@@ -45,7 +37,7 @@ export class RealtimeFilter
     const msg = err.getResponse();
 
     return response.status(err.getStatus()).json({
-      ...(typeof msg === "string" ? { message: msg } : msg),
+      ...(typeof msg === 'string' ? { message: msg } : msg),
       error: err.name,
       statusCode: err.getStatus(),
     });
@@ -53,5 +45,5 @@ export class RealtimeFilter
 }
 
 const isMongoServerError = (obj: any): obj is MongoServerError => {
-  return obj.name === MongoServerError.name;
+  return obj.name === 'MongoServerError';
 };

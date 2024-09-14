@@ -1,30 +1,17 @@
-import { ModuleMetadata, Provider, Type } from '@nestjs/common';
-import { RealtimeEventHandler } from './realtime.types';
-import { Request } from 'express';
-import { Socket } from 'socket.io';
-import { ValidationOptions } from 'class-validator';
+import { Type } from '@nestjs/common';
+import type { Request } from 'express';
+import type { Socket } from 'socket.io';
+import type { ValidationOptions } from 'class-validator';
+import { CanActivate } from '@nestjs/common/interfaces';
 
 export interface RealtimeMongoOptions<
   User extends Record<string, any> | undefined = any,
 > {
   /**
-   * Any modules needed to be imported for the injectable dependencies.
-   */
-  imports?: ModuleMetadata['imports'];
-  /**
    * The @nestjs/mongoose connectionToken
    * @default require('@nestjs/mongoose').getConnectionToken()
    */
   connectionToken?: string;
-  /**
-   * An injectable class to call whenever a change stream is received.
-   */
-  eventHandler?: Provider<RealtimeEventHandler>;
-  /**
-   * Emits change events to `@nestjs/event-emitter` package, for the application to handle server side changes.
-   * @default false
-   */
-  enableEventEmitter?: boolean;
   /**
    * Enables the `@nestjs/websockets` Gateway for client devices to recieve realtime data.
    * @default false
@@ -36,7 +23,11 @@ export interface RealtimeMongoOptions<
    */
   enableRestApi?: boolean;
   /**
-   * Without this, client devices essentially using REST or WS has access to all documents.
+   * Attach a Guard to the WebSocket Gateway.
+   */
+  websocketGuard: CanActivate | Type<CanActivate>;
+  /**
+   * Without this, client devices essentially using REST or WS has access to all documents/collections.
    */
   accessGuard?: {
     /**
