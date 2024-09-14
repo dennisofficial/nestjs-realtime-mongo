@@ -267,6 +267,87 @@ export class RealtimeController {
     return result;
   }
 
+  @Post('deleteOne')
+  async deleteOne(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { filter, update }: UpdateDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    await model.deleteOne(filter, update);
+  }
+
+  @Post('deleteMany')
+  async deleteMany(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { filter }: FilterDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    await model.deleteMany(filter);
+  }
+
+  @Post('findOneAndDelete')
+  async findOneAndDelete(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { filter }: FilterDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    const result = await model.findOneAndDelete(filter);
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
+  @Post('findByIdAndDelete')
+  async findByIdAndDelete(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { _id }: ObjectIdDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const filter: FilterQuery<any> = { _id };
+    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    const result = await model.findOneAndDelete(filter);
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
   private getUser = (req: Request) => {
     return this.options.accessGuard?.extractUserRest?.(req) ?? null;
   };
