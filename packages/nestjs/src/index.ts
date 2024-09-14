@@ -1,9 +1,7 @@
-import {
-  RealtimeMongoModule,
-  type RealtimeMongoOptions,
-} from "./realtime-mongo.module";
+import { RealtimeModule } from './realtime.module';
+import type { RealtimeMongoOptions } from './realtime.options';
+import { RealtimeEventHandler, RealtimeMongoEvent } from './realtime.types';
+import { ChangeStreamListener } from './decorators/change-stream-listener.decorator';
 
-import { IRealtimeMongoEventHandler } from "./realtime-mongo.types";
-
-export { RealtimeMongoModule };
-export type { RealtimeMongoOptions, IRealtimeMongoEventHandler };
+export { RealtimeModule, ChangeStreamListener, RealtimeEventHandler };
+export type { RealtimeMongoOptions, RealtimeMongoEvent };

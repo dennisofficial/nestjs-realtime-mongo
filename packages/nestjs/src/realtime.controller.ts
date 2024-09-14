@@ -1,4 +1,3 @@
-import { IsString } from "class-validator";
 import {
   BadRequestException,
   Body,
@@ -11,24 +10,18 @@ import {
 } from "@nestjs/common";
 import { FilterQuery } from "mongoose";
 import { Request } from "express";
-import { RealtimeMongoService } from "./realtime-mongo.service";
-import { RealtimeMongoQuery } from "./realtime-mongo.query";
-
-type Return<F> = F extends () => Promise<infer R> ? R : never;
-
-class ObjectIdDto {
-  @IsString()
-  _id: string;
-}
+import { RealtimeService } from "./services/realtime.service";
+import { WebsocketQuery } from "./dto/websocket.query";
+import { Return } from "./realtime.types";
 
 @Controller("database")
-export class RealtimeMongoController {
-  constructor(private readonly databaseService: RealtimeMongoService) {}
+export class RealtimeController {
+  constructor(private readonly databaseService: RealtimeService) {}
 
   @Post("findOne")
   async findOne(
     @Req() req: Request,
-    @Query() query: RealtimeMongoQuery,
+    @Query() query: WebsocketQuery,
     @Body() body: FilterQuery<any>,
   ) {
     const model = this.databaseService.resolveModel(
@@ -43,7 +36,7 @@ export class RealtimeMongoController {
   @Post("find")
   async find(
     @Req() req: Request,
-    @Query() query: RealtimeMongoQuery,
+    @Query() query: WebsocketQuery,
     @Body() body: FilterQuery<any>,
   ) {
     const model = this.databaseService.resolveModel(
@@ -56,8 +49,8 @@ export class RealtimeMongoController {
   @Post("findById")
   async findById(
     @Req() req: Request,
-    @Query() query: RealtimeMongoQuery,
-    @Body() body: ObjectIdDto,
+    @Query() query: WebsocketQuery,
+    @Body() body: any,
   ) {
     const model = this.databaseService.resolveModel(
       query.collection,
@@ -73,7 +66,7 @@ export class RealtimeMongoController {
   @Post("insert")
   async insert(
     @Req() req: Request,
-    @Query() query: RealtimeMongoQuery,
+    @Query() query: WebsocketQuery,
     @Body() body: any,
   ) {
     const model = this.databaseService.resolveModel(
@@ -86,7 +79,7 @@ export class RealtimeMongoController {
   @Post("insertMany")
   async insertMany(
     @Req() req: Request,
-    @Query() query: RealtimeMongoQuery,
+    @Query() query: WebsocketQuery,
     @Body() body: any,
   ) {
     if (!Array.isArray(body)) {

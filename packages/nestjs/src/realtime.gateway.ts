@@ -4,39 +4,39 @@ import {
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
-} from "@nestjs/websockets";
+} from '@nestjs/websockets';
 import {
   BadRequestException,
   Inject,
   InternalServerErrorException,
   UseFilters,
   ValidationPipe,
-} from "@nestjs/common";
-import { Connection, FilterQuery } from "mongoose";
-import { Namespace } from "socket.io";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
-import { RealtimeMongoFilter } from "./realtime-mongo.filter";
-import { REALTIME_MONGO_DB_CONNECTION } from "./realtime-mongo.constants";
-import { RealtimeSessionService } from "./realtime-session.service";
-import { RealtimeMongoService } from "./realtime-mongo.service";
-import type { DbSocket, ListenMap } from "./realtime-mongo.types";
-import { RealtimeMongoQuery } from "./realtime-mongo.query";
+} from '@nestjs/common';
+import { Connection, FilterQuery } from 'mongoose';
+import { Namespace } from 'socket.io';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { RealtimeFilter } from './realtime.filter';
+import { REALTIME_MONGO_DB_CONNECTION } from './realtime.constants';
+import { SessionService } from './services/session.service';
+import { RealtimeService } from './services/realtime.service';
+import type { DbSocket, ListenMap } from './realtime.types';
+import { WebsocketQuery } from './dto/websocket.query';
 
-@WebSocketGateway({ namespace: "database" })
-@UseFilters(RealtimeMongoFilter)
-export class RealtimeMongoGateway
+@WebSocketGateway({ namespace: 'database' })
+@UseFilters(RealtimeFilter)
+export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   constructor(
     @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
-    private readonly sessionService: RealtimeSessionService,
-    private readonly databaseService: RealtimeMongoService,
+    private readonly sessionService: SessionService,
+    private readonly databaseService: RealtimeService,
   ) {}
 
   afterInit(server: Namespace): void {
     server.use(async (client: DbSocket, next) => {
-      const query = plainToInstance(RealtimeMongoQuery, client.handshake.query);
+      const query = plainToInstance(WebsocketQuery, client.handshake.query);
 
       // Validate Query DTO
       const validationErrors = await validate(query, {
@@ -98,7 +98,7 @@ export class RealtimeMongoGateway
     this.sessionService.remove(client);
   }
 
-  @SubscribeMessage<keyof ListenMap>("query")
+  @SubscribeMessage<keyof ListenMap>('query')
   async onQuery(client: DbSocket, payload: FilterQuery<any>) {
     let session;
     let model;
@@ -118,10 +118,10 @@ export class RealtimeMongoGateway
     session.query = payload;
     session.document_ids = new Set<string>(result.map(({ _id }) => `${_id}`));
 
-    client.emit("data", result);
+    client.emit('data', result);
   }
 
-  @SubscribeMessage<keyof ListenMap>("document")
+  @SubscribeMessage<keyof ListenMap>('document')
   async onDocument(client: DbSocket, { _id }: { _id: string }) {
     const modelSession = this.databaseService.getModelSession(client);
     if (!modelSession) return;
@@ -131,6 +131,6 @@ export class RealtimeMongoGateway
 
     session.document_id = _id;
 
-    client.emit("data", result);
+    client.emit('data', result);
   }
 }

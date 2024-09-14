@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { DbSocket, RealtimeMongoSession } from "./realtime-mongo.types";
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { DbSocket, RealtimeMongoSession } from '../realtime.types';
 
 @Injectable()
-export class RealtimeSessionService {
+export class SessionService {
   private sessions = new Map<string, RealtimeMongoSession>();
 
   create = (socket: DbSocket) => {
@@ -27,7 +27,7 @@ export class RealtimeSessionService {
   findOrThrow = (socket: DbSocket) => {
     const session = this.find(socket);
     if (!session) {
-      throw new BadRequestException("Session not found. Please reconnect");
+      throw new BadRequestException('Session not found. Please reconnect');
     }
     return session;
   };

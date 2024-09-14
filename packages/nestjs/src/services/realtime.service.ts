@@ -3,21 +3,21 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { Connection, Model } from "mongoose";
-import { REALTIME_MONGO_DB_CONNECTION } from "./realtime-mongo.constants";
-import { RealtimeSessionService } from "./realtime-session.service";
+} from '@nestjs/common';
+import { Connection, Model } from 'mongoose';
+import { REALTIME_MONGO_DB_CONNECTION } from '../realtime.constants';
+import { SessionService } from './session.service';
 import {
   DbSocket,
   DiscriminatorMapping,
   RealtimeMongoSession,
-} from "./realtime-mongo.types";
+} from '../realtime.types';
 
 @Injectable()
-export class RealtimeMongoService {
+export class RealtimeService {
   constructor(
     @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
-    private readonly sessionService: RealtimeSessionService,
+    private readonly sessionService: SessionService,
   ) {}
 
   getModelSession = (
@@ -26,9 +26,9 @@ export class RealtimeMongoService {
     const session = this.sessionService.find(client);
     if (!session) {
       const exception = new BadRequestException(
-        "Session not found. Please reconnect",
+        'Session not found. Please reconnect',
       );
-      client.emit("exception", exception.getResponse());
+      client.emit('exception', exception.getResponse());
       client.disconnect(true);
       return;
     }
@@ -39,7 +39,7 @@ export class RealtimeMongoService {
       const exception = new BadRequestException(
         `Model was not found using collection: ${client.data.query.collection}`,
       );
-      client.emit("exception", exception.getResponse());
+      client.emit('exception', exception.getResponse());
       client.disconnect(true);
       return;
     }

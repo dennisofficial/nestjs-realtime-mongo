@@ -1,6 +1,6 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from "class-validator";
 
-export class RealtimeMongoQuery {
+export class WebsocketQuery {
   @IsString()
   collection: string;
 

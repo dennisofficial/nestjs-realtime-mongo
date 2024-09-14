@@ -1,0 +1,9 @@
+export const REALTIME_MONGO_DB_CONNECTION = Symbol(
+  "REALTIME_MONGO_DB_CONNECTION",
+);
+export const REALTIME_MONGO_OPTIONS = Symbol("REALTIME_MONGO_OPTIONS");
+export const REALTIME_MONGO_EVENT_HANDLER = Symbol(
+  "REALTIME_MONGO_EVENT_HANDLER",
+);
+
+export const METADATA_CHANGE_STREAM_LISTENER = Symbol("realtime:listener");

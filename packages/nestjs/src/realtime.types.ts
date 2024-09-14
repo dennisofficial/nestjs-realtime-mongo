@@ -1,13 +1,15 @@
-import { FilterQuery } from "mongoose";
-import { Socket } from "socket.io";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import { FilterQuery } from 'mongoose';
+import { Socket } from 'socket.io';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import {
   ChangeStreamDeleteDocument,
   ChangeStreamInsertDocument,
   ChangeStreamReplaceDocument,
   ChangeStreamUpdateDocument,
-} from "mongodb";
-import { RealtimeMongoQuery } from "./realtime-mongo.query";
+} from 'mongodb';
+import { WebsocketQuery } from './dto/websocket.query';
+
+export type Return<F> = F extends () => Promise<infer R> ? R : never;
 
 export interface ListenMap {
   query: (data: FilterQuery<any>) => void;
@@ -23,7 +25,7 @@ export interface EmitMap {
 }
 
 export interface SocketData {
-  query: RealtimeMongoQuery;
+  query: WebsocketQuery;
   discriminatorMapping?: DiscriminatorMapping;
 }
 
@@ -34,7 +36,7 @@ export interface DiscriminatorMapping {
 }
 
 export type DbSocket = Socket<ListenMap, EmitMap, DefaultEventsMap, SocketData>;
-export type DataChange =
+export type RealtimeMongoEvent =
   | ChangeStreamInsertDocument
   | ChangeStreamUpdateDocument
   | ChangeStreamReplaceDocument
@@ -47,6 +49,6 @@ export interface RealtimeMongoSession {
   document_ids: Set<string>;
 }
 
-export interface IRealtimeMongoEventHandler {
-  onChangeEvent: (data: DataChange) => void | Promise<void>;
+export abstract class RealtimeEventHandler {
+  abstract onChangeEvent(data: RealtimeMongoEvent): void | Promise<void>;
 }

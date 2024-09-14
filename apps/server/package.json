@@ -11,7 +11,8 @@
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
     "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "cross-env NODE_ENV=production node dist/main",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "docker": "docker compose up -d"
   },
   "dependencies": {
     "@nestjs/bullmq": "^10.2.1",
