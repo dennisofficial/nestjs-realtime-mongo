@@ -19,11 +19,11 @@ import type { Namespace } from 'socket.io';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { RealtimeFilter } from './realtime.filter';
-import { REALTIME_MONGO_DB_CONNECTION } from './realtime.constants';
+import { REALTIME_CONNECTION } from './realtime.constants';
 import { SessionService } from './services/session.service';
-import { RealtimeService } from './services/realtime.service';
+import { RealtimeService } from './realtime.service';
 import type { DbSocket, ListenMap } from './realtime.types';
-import { WebsocketQuery } from './dto/websocket.query';
+import { RealtimeQuery } from './dto/realtime.query';
 import { GuardService } from './services/guard.service';
 
 @WebSocketGateway({ namespace: 'database' })
@@ -32,7 +32,7 @@ export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   constructor(
-    @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
+    @Inject(REALTIME_CONNECTION) private readonly mongoCon: Connection,
     private readonly sessionService: SessionService,
     private readonly databaseService: RealtimeService,
     private readonly guardService: GuardService,
@@ -56,7 +56,7 @@ export class RealtimeGateway
         return;
       }
 
-      const query = plainToInstance(WebsocketQuery, client.handshake.query);
+      const query = plainToInstance(RealtimeQuery, client.handshake.query);
 
       // Validate Query DTO
       const validationErrors = await validate(query, {

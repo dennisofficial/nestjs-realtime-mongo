@@ -1,4 +1,4 @@
-import type { FilterQuery } from 'mongoose';
+import type { Document, FilterQuery } from 'mongoose';
 import type { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import {
@@ -7,7 +7,7 @@ import {
   ChangeStreamReplaceDocument,
   ChangeStreamUpdateDocument,
 } from 'mongodb';
-import { WebsocketQuery } from './dto/websocket.query';
+import { RealtimeQuery } from './dto/realtime.query';
 
 export type Return<F> = F extends () => Promise<infer R> ? R : never;
 
@@ -25,7 +25,7 @@ export interface EmitMap {
 }
 
 export interface SocketData {
-  query: WebsocketQuery;
+  query: RealtimeQuery;
   discriminatorMapping?: DiscriminatorMapping;
 }
 
@@ -51,6 +51,24 @@ export interface RealtimeMongoSession {
 
 export abstract class RealtimeEventHandler {
   abstract onChangeEvent(data: RealtimeMongoEvent): void | Promise<void>;
+}
+
+export abstract class RealtimeRuleGuard<
+  U extends Record<string, any>,
+  D extends Document,
+> {
+  abstract canCreate(
+    user: U | null,
+  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  abstract canRead(
+    user: U | null,
+  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  abstract canUpdate(
+    user: U | null,
+  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  abstract canDelete(
+    user: U | null,
+  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
 }
 
 export interface CanRealtimeActivate {

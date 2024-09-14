@@ -1,26 +1,18 @@
-import {
-  DynamicModule,
-  Inject,
-  Logger,
-  OnModuleInit,
-  UseGuards,
-} from '@nestjs/common';
+import { DynamicModule, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
 import { RealtimeController } from './realtime.controller';
 import { StreamService } from './services/stream.service';
 import { SessionService } from './services/session.service';
-import { RealtimeService } from './services/realtime.service';
+import { RealtimeService } from './realtime.service';
 import { RealtimeGateway } from './realtime.gateway';
-import {
-  REALTIME_MONGO_DB_CONNECTION,
-  REALTIME_MONGO_OPTIONS,
-} from './realtime.constants';
+import { REALTIME_CONNECTION, REALTIME_OPTIONS } from './realtime.constants';
 import type { RealtimeMongoOptions } from './realtime.options';
 import { EventService } from './services/event.service';
 import { DiscoveryModule } from '@nestjs/core';
 import { ExplorerService } from './services/explorer.service';
 import { GuardService } from './services/guard.service';
+import { RuleService } from './services/rule.service';
 
 export class RealtimeModule implements OnModuleInit {
   private logger = new Logger(this.constructor.name);
@@ -40,12 +32,13 @@ export class RealtimeModule implements OnModuleInit {
         StreamService,
         SessionService,
         GuardService,
+        RuleService,
         {
-          provide: REALTIME_MONGO_OPTIONS,
+          provide: REALTIME_OPTIONS,
           useValue: options,
         },
         {
-          provide: REALTIME_MONGO_DB_CONNECTION,
+          provide: REALTIME_CONNECTION,
           useExisting: options.connectionToken ?? getConnectionToken(),
         },
       ],
@@ -57,19 +50,15 @@ export class RealtimeModule implements OnModuleInit {
     }
 
     if (options.enableWebsocket) {
-      const gateway = RealtimeGateway;
-      if (options.websocketGuard) {
-        UseGuards(options.websocketGuard)(gateway);
-      }
-      module.providers.push(gateway);
+      module.providers.push(RealtimeGateway);
     }
 
     return module;
   }
 
   constructor(
-    @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly conn: Connection,
-    @Inject(REALTIME_MONGO_OPTIONS)
+    @Inject(REALTIME_CONNECTION) private readonly conn: Connection,
+    @Inject(REALTIME_OPTIONS)
     private readonly options: RealtimeMongoOptions,
   ) {}
 

@@ -2,7 +2,6 @@ import { Type } from '@nestjs/common';
 import type { Request } from 'express';
 import type { Socket } from 'socket.io';
 import type { ValidationOptions } from 'class-validator';
-import { CanActivate } from '@nestjs/common/interfaces';
 
 export interface RealtimeMongoOptions<
   User extends Record<string, any> | undefined = any,
@@ -22,10 +21,6 @@ export interface RealtimeMongoOptions<
    * @default false
    */
   enableRestApi?: boolean;
-  /**
-   * Attach a Guard to the WebSocket Gateway.
-   */
-  websocketGuard: CanActivate | Type<CanActivate>;
   /**
    * Without this, client devices essentially using REST or WS has access to all documents/collections.
    */

@@ -4,10 +4,7 @@ import {
   Logger,
   type OnApplicationShutdown,
 } from '@nestjs/common';
-import {
-  REALTIME_MONGO_DB_CONNECTION,
-  REALTIME_MONGO_OPTIONS,
-} from '../realtime.constants';
+import { REALTIME_CONNECTION, REALTIME_OPTIONS } from '../realtime.constants';
 import type { Connection, FilterQuery } from 'mongoose';
 import type { RealtimeMongoOptions } from '../realtime.options';
 import { SessionService } from './session.service';
@@ -23,9 +20,8 @@ export class StreamService implements OnApplicationShutdown {
   private changeStream;
 
   constructor(
-    @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
-    @Inject(REALTIME_MONGO_OPTIONS)
-    private readonly options: RealtimeMongoOptions,
+    @Inject(REALTIME_CONNECTION) private readonly mongoCon: Connection,
+    @Inject(REALTIME_OPTIONS) private readonly options: RealtimeMongoOptions,
     private readonly sessionService: SessionService,
     private readonly eventService: EventService,
   ) {

@@ -3,9 +3,16 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { REALTIME_GUARD, RealtimeModule } from "@dl-tech/realtime-mongo-nestjs";
 import { BullModule } from "@nestjs/bullmq";
 import { DatabaseEventService } from "@/database-event.service";
-import { UserModel, UserSchema } from "@/schemas/user.model";
 import { APP_GUARD } from "@nestjs/core";
 import { AppGuard } from "@/app.guard";
+import { UserModule } from "@/user/user.module";
+
+const mockUser = {
+  _id: "66e5036b6426de44d501d00d",
+  first_name: "Dennis",
+  last_name: "Lysenko",
+  age: 6,
+};
 
 @Module({
   imports: [
@@ -13,7 +20,6 @@ import { AppGuard } from "@/app.guard";
       replicaSet: "rs0",
       dbName: "testing",
     }),
-    MongooseModule.forFeature([{ name: UserModel.name, schema: UserSchema }]),
 
     BullModule.forRoot({
       connection: {
@@ -24,8 +30,13 @@ import { AppGuard } from "@/app.guard";
     RealtimeModule.forRoot({
       enableRestApi: true,
       enableWebsocket: true,
-      websocketGuard: AppGuard,
+      accessGuard: {
+        extractUserRest: () => mockUser,
+        extractUserWS: () => mockUser,
+      },
     }),
+
+    UserModule,
   ],
   providers: [
     DatabaseEventService,

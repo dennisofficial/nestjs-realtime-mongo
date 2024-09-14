@@ -5,18 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Connection, Model } from 'mongoose';
-import { REALTIME_MONGO_DB_CONNECTION } from '../realtime.constants';
-import { SessionService } from './session.service';
+import { REALTIME_CONNECTION } from './realtime.constants';
+import { SessionService } from './services/session.service';
 import {
   DbSocket,
   DiscriminatorMapping,
   RealtimeMongoSession,
-} from '../realtime.types';
+} from './realtime.types';
 
 @Injectable()
 export class RealtimeService {
   constructor(
-    @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
+    @Inject(REALTIME_CONNECTION) private readonly mongoCon: Connection,
     private readonly sessionService: SessionService,
   ) {}
 
