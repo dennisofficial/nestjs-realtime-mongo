@@ -1,6 +1,7 @@
 /dist/
 /node_modules/
 /mongodb/
+/redis/
 
 # Add any additional files or directories to ignore
 .idea/

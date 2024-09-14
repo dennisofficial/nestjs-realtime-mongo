@@ -43,9 +43,9 @@ export class RealtimeStreamService implements OnApplicationShutdown {
   ) {
     this.changeStream = this.connectChangeStream();
 
-    if (options.enableEventEmitter) {
+    if (this.options.enableEventEmitter) {
       this.moduleRef
-        .resolve(EventEmitter2)
+        .create(EventEmitter2)
         .then((result) => (this.eventEmitter = result));
     }
   }
@@ -251,17 +251,17 @@ export class RealtimeStreamService implements OnApplicationShutdown {
   };
 
   private handleAppEmitter(data: ChangeStreamDocument) {
-    if (!this.isNeededChangeDocument(data)) return;
+    if (!this.isNeededChangeDocument(data) || !this.eventEmitter) return;
 
     if (data.operationType === "delete") {
-      void this.eventEmitter?.emit(`database.${data.ns.coll}.deleted`, {
+      void this.eventEmitter.emit(`database.${data.ns.coll}.deleted`, {
         _id: data.documentKey._id.toString(),
       });
     }
 
     // Handle update and replace operations
     if (data.operationType === "update" || data.operationType === "replace") {
-      void this.eventEmitter?.emit(
+      void this.eventEmitter.emit(
         `database.${data.ns.coll}.updated`,
         data.fullDocument,
       );
@@ -269,7 +269,7 @@ export class RealtimeStreamService implements OnApplicationShutdown {
 
     // Handle insert operation
     if (data.operationType === "insert") {
-      void this.eventEmitter?.emit(
+      void this.eventEmitter.emit(
         `database.${data.ns.coll}.created`,
         data.fullDocument,
       );
