@@ -18,7 +18,6 @@ import { RealtimeService } from './realtime.service';
 import { RealtimeQuery } from './dto/realtime.query';
 import { RealtimeRuleGuard, Return } from './realtime.types';
 import {
-  ERealtimeError,
   METADATA_REALTIME_CONTROLLER,
   REALTIME_OPTIONS,
 } from './realtime.constants';
@@ -57,15 +56,7 @@ class UpdateIdDto {
   update: UpdateQuery<any>;
 }
 
-class UpdateSingleDto {
-  @IsObject({ each: false })
-  filter: FilterQuery<any>;
-
-  @IsObject({ each: false })
-  update: UpdateQuery<any>;
-}
-
-class UpdateMultipleDto {
+class UpdateDto {
   @IsObject({ each: false })
   filter: FilterQuery<any>;
 
@@ -95,15 +86,14 @@ export class RealtimeController {
     );
 
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
 
     const result = await this.executeOrThrow(() =>
       model.findOne(filter).exec(),
     );
     if (!result) throw new NotFoundException();
-
-    if (guardFilter && !guardFilter.test(result)) {
-      throw new ForbiddenException(ERealtimeError.RULE_FAILED);
-    }
 
     return result;
   }
@@ -120,14 +110,11 @@ export class RealtimeController {
     );
 
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
-
-    const results = await this.executeOrThrow(() => model.find(filter).exec());
-
     if (guardFilter) {
-      return results.filter((r) => guardFilter.test(r));
+      this.mergeFilters(filter, guardFilter);
     }
 
-    return results;
+    return await this.executeOrThrow(() => model.find(filter).exec());
   }
 
   @Post('findById')
@@ -141,14 +128,16 @@ export class RealtimeController {
       query.discriminator,
     );
 
+    const filter: FilterQuery<any> = { _id };
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
-
-    const result = await this.executeOrThrow(() => model.findById(_id).exec());
-    if (!result) throw new NotFoundException();
-
-    if (guardFilter && !guardFilter.test(result)) {
-      throw new ForbiddenException(ERealtimeError.RULE_FAILED);
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
     }
+
+    const result = await this.executeOrThrow(() =>
+      model.findOne(filter).exec(),
+    );
+    if (!result) throw new NotFoundException();
 
     return result;
   }
@@ -167,7 +156,7 @@ export class RealtimeController {
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !guardFilter.test(data)) {
-      throw new ForbiddenException(ERealtimeError.RULE_FAILED);
+      throw new ForbiddenException('Forbidden Document Values');
     }
 
     return this.executeOrThrow(() => model.create(data));
@@ -187,17 +176,59 @@ export class RealtimeController {
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !data.every((item) => guardFilter.test(item))) {
-      throw new ForbiddenException(ERealtimeError.RULE_FAILED);
+      throw new ForbiddenException('Forbidden Document Values');
     }
 
     return this.executeOrThrow(() => model.insertMany(data));
+  }
+
+  @Post('updateOne')
+  async updateOne(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { filter, update }: UpdateDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    const result = await model.updateOne(filter, update);
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
+  @Post('updateMany')
+  async updateMany(
+    @Req() req: Request,
+    @Query() query: RealtimeQuery,
+    @Body() { filter, update }: UpdateDto,
+  ) {
+    const model = this.databaseService.resolveModel(
+      query.collection,
+      query.discriminator,
+    );
+
+    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    const result = await model.updateMany(filter, update);
+    if (!result) throw new NotFoundException();
+    return result;
   }
 
   @Post('findOneAndUpdate')
   async findOneAndUpdate(
     @Req() req: Request,
     @Query() query: RealtimeQuery,
-    @Body() { filter, update }: UpdateSingleDto,
+    @Body() { filter, update }: UpdateDto,
   ) {
     const model = this.databaseService.resolveModel(
       query.collection,
@@ -253,7 +284,7 @@ export class RealtimeController {
     );
 
     if (typeof guard === 'boolean' && !guard) {
-      throw new ForbiddenException(ERealtimeError.RULE_FAILED);
+      throw new ForbiddenException();
     }
 
     if (typeof guard === 'object') {

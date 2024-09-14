@@ -104,7 +104,7 @@ export class DatabaseEventService extends RealtimeEventHandler {
 
 ```
 
-### Authorization / Authentication
+### Authentication
 Rest API endpoints resolved by the package can be protected using NestJS's `APP_GUARD`, see docs [here](https://docs.nestjs.com/guards).
 However, global guards are not applied to WebSockets in NestJS, and `@UseGuards()` in WebSockets only guard message channels, and not
 the socket.io handshake.
@@ -242,3 +242,5 @@ export class AppGuard implements CanActivate {
   }
 }
 ```
+
+### Authorization
