@@ -20,6 +20,7 @@ import type { RealtimeMongoOptions } from './realtime.options';
 import { EventService } from './services/event.service';
 import { DiscoveryModule } from '@nestjs/core';
 import { ExplorerService } from './services/explorer.service';
+import { GuardService } from './services/guard.service';
 
 export class RealtimeModule implements OnModuleInit {
   private logger = new Logger(this.constructor.name);
@@ -38,6 +39,7 @@ export class RealtimeModule implements OnModuleInit {
         EventService,
         StreamService,
         SessionService,
+        GuardService,
         {
           provide: REALTIME_MONGO_OPTIONS,
           useValue: options,

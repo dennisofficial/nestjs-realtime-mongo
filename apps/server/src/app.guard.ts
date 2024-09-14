@@ -15,7 +15,6 @@ export class AppGuard implements CanActivate, CanRealtimeActivate {
   }
 
   canRealtimeActivate(socket: Socket): boolean | Promise<boolean> {
-    // Do some Logic
     return true;
   }
 }

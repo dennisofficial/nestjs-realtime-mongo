@@ -7,6 +7,8 @@ import {
 } from '@nestjs/websockets';
 import {
   BadRequestException,
+  ForbiddenException,
+  HttpException,
   Inject,
   InternalServerErrorException,
   UseFilters,
@@ -22,6 +24,7 @@ import { SessionService } from './services/session.service';
 import { RealtimeService } from './services/realtime.service';
 import type { DbSocket, ListenMap } from './realtime.types';
 import { WebsocketQuery } from './dto/websocket.query';
+import { GuardService } from './services/guard.service';
 
 @WebSocketGateway({ namespace: 'database' })
 @UseFilters(RealtimeFilter)
@@ -32,10 +35,27 @@ export class RealtimeGateway
     @Inject(REALTIME_MONGO_DB_CONNECTION) private readonly mongoCon: Connection,
     private readonly sessionService: SessionService,
     private readonly databaseService: RealtimeService,
+    private readonly guardService: GuardService,
   ) {}
 
   afterInit(server: Namespace): void {
     server.use(async (client: DbSocket, next) => {
+      try {
+        const canActivate = await this.guardService.invokeGuards(client);
+
+        if (!canActivate) {
+          next(new ForbiddenException());
+          return;
+        }
+      } catch (e) {
+        if (e instanceof HttpException) {
+          next(e);
+        } else {
+          next(new InternalServerErrorException());
+        }
+        return;
+      }
+
       const query = plainToInstance(WebsocketQuery, client.handshake.query);
 
       // Validate Query DTO
