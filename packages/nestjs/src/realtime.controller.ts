@@ -276,7 +276,7 @@ export class RealtimeController {
   async deleteOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { filter, update }: UpdateDto,
+    @Body() { filter }: FilterDto,
   ): Promise<DeleteResult> {
     const model = this.databaseService.getModelOrThrow(modelName);
 
@@ -285,7 +285,7 @@ export class RealtimeController {
       this.mergeFilters(filter, guardFilter);
     }
 
-    return model.deleteOne(filter, update);
+    return model.deleteOne(filter);
   }
 
   @Delete('deleteMany')

@@ -74,36 +74,12 @@ export class RealtimeGateway
       client.data.query = query;
 
       // Validate Collection Name
-      const collections = Object.keys(this.mongoCon.collections);
-      if (!collections.includes(query.collection)) {
+      const modelNames = this.mongoCon.modelNames();
+      if (!modelNames.includes(query.modelName)) {
         const err = new BadRequestException(
-          `Unknown collection: ${query.collection}`,
+          `Unknown collection: ${query.modelName}`,
         );
         return next(err);
-      }
-
-      // Validate Model Instance
-      const model = this.databaseService.getModel(query.collection);
-      if (!model) {
-        const err = new InternalServerErrorException(
-          `Collection found: ${query.collection}, Model undefined`,
-        );
-        return next(err);
-      }
-
-      // Validate Discriminator
-      if (query.discriminator) {
-        const discriminator = this.databaseService.getDiscriminatorMapping(
-          model,
-          query.discriminator,
-        );
-        if (!discriminator) {
-          const err = new BadRequestException(
-            `Unknown discriminator: ${query.discriminator}`,
-          );
-          return next(err);
-        }
-        client.data.discriminatorMapping = discriminator;
       }
 
       return next();
@@ -124,10 +100,7 @@ export class RealtimeGateway
     let model;
     try {
       session = this.sessionService.findOrThrow(client);
-      model = this.databaseService.resolveModel(
-        client.data.query.collection,
-        client.data.query.discriminator,
-      );
+      model = this.databaseService.getModelOrThrow(client.data.query.modelName);
     } catch (e) {
       client.disconnect(true);
       return;

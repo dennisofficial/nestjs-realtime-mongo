@@ -327,7 +327,7 @@ export class UserRule extends RealtimeRuleGuard<User, UserDocument> {
 
   // No authenicated user can delete
   canDelete(user: User | null): boolean {
-    return true;
+    return false;
   }
 }
 
