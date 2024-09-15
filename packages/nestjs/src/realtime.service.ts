@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Connection, Model } from 'mongoose';
+import type { Connection, Model } from 'mongoose';
 import { REALTIME_CONNECTION } from './realtime.constants';
 import { SessionService } from './services/session.service';
 import {
@@ -33,11 +33,11 @@ export class RealtimeService {
       return;
     }
 
-    const model = this.getModel(client.data.query.collection);
+    const model = this.getModel(client.data.query.modelName);
 
     if (!model) {
       const exception = new BadRequestException(
-        `Model was not found using collection: ${client.data.query.collection}`,
+        `Model was not found using: ${client.data.query.modelName}`,
       );
       client.emit('exception', exception.getResponse());
       client.disconnect(true);
@@ -46,45 +46,20 @@ export class RealtimeService {
     return [session, model];
   };
 
-  getModel(collection: string): Model<any> | undefined {
+  getModel(modelName: string): Model<any> | undefined {
     return Object.values(this.mongoCon.models).find(
-      (model) => model.collection.name === collection,
+      (model) => model.modelName === modelName,
     );
   }
 
-  getModelOrThrow(collection: string): Model<any> {
-    const model = this.getModel(collection);
+  getModelOrThrow(modelName: string): Model<any> {
+    const model = this.getModel(modelName);
 
     if (!model) {
-      throw new NotFoundException(`Collection ${collection} does not exist`);
+      throw new NotFoundException(`Model ${modelName} does not exist`);
     }
 
     return model;
-  }
-
-  resolveModel(collection: string, discrimatorValue?: string): Model<any> {
-    const model = this.getModelOrThrow(collection);
-
-    let discriminatorModel: Model<any> | undefined;
-    if (discrimatorValue) {
-      const exception = new NotFoundException(
-        `Discriminator model was not found using discriminator value: ${discrimatorValue}`,
-      );
-
-      const discriminatorMapping = this.getDiscriminatorMapping(
-        model,
-        discrimatorValue,
-      );
-      if (!discriminatorMapping) throw exception;
-
-      discriminatorModel = this.getDiscriminatorModel(
-        model,
-        discriminatorMapping.value,
-      );
-      if (!discriminatorModel) throw exception;
-    }
-
-    return discriminatorModel ?? model;
   }
 
   getDiscriminatorMapping(
@@ -97,16 +72,5 @@ export class RealtimeService {
         discriminatorValue,
     );
     return (discriminator?.schema as any)?.discriminatorMapping;
-  }
-
-  getDiscriminatorModel(
-    model: Model<any>,
-    discriminatorValue: string,
-  ): Model<any> | undefined {
-    return Object.values(model.discriminators ?? {}).find(
-      (discriminator) =>
-        (discriminator.schema as any).discriminatorMapping.value ===
-        discriminatorValue,
-    );
   }
 }

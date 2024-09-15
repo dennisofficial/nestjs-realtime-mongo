@@ -26,6 +26,7 @@ import { RuleService } from './services/rule.service';
 import { Request } from 'express';
 import { Query as MongoQuery } from 'mingo';
 import { IsArray, IsObject, IsString } from 'class-validator';
+import { DeleteResult, UpdateResult } from 'mongodb';
 
 class ObjectIdDto {
   @IsString()
@@ -74,16 +75,61 @@ export class RealtimeController {
     private readonly ruleService: RuleService,
   ) {}
 
+  //  ██████╗██████╗ ███████╗ █████╗ ████████╗███████╗
+  // ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔════╝
+  // ██║     ██████╔╝█████╗  ███████║   ██║   █████╗
+  // ██║     ██╔══██╗██╔══╝  ██╔══██║   ██║   ██╔══╝
+  // ╚██████╗██║  ██║███████╗██║  ██║   ██║   ███████╗
+  //  ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝
+
+  @Post('insertOne')
+  async insertOne(
+    @Req() req: Request,
+    @Query() { modelName }: RealtimeQuery,
+    @Body() { data }: DataSingleDto,
+  ) {
+    const model = this.databaseService.getModelOrThrow(modelName);
+
+    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
+
+    if (guardFilter && !guardFilter.test(data)) {
+      throw new ForbiddenException('Forbidden Document Values');
+    }
+
+    return this.executeOrThrow(() => model.create(data));
+  }
+
+  @Post('insertMany')
+  async insertMany(
+    @Req() req: Request,
+    @Query() { modelName }: RealtimeQuery,
+    @Body() { data }: DataArrayDto,
+  ) {
+    const model = this.databaseService.getModelOrThrow(modelName);
+
+    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
+
+    if (guardFilter && !data.every((item) => guardFilter.test(item))) {
+      throw new ForbiddenException('Forbidden Document Values');
+    }
+
+    return this.executeOrThrow(() => model.insertMany(data));
+  }
+
+  // ██████╗ ███████╗ █████╗ ██████╗
+  // ██╔══██╗██╔════╝██╔══██╗██╔══██╗
+  // ██████╔╝█████╗  ███████║██║  ██║
+  // ██╔══██╗██╔══╝  ██╔══██║██║  ██║
+  // ██║  ██║███████╗██║  ██║██████╔╝
+  // ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝
+
   @Post('findOne')
   async findOne(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
     if (guardFilter) {
@@ -98,35 +144,29 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('find')
-  async find(
+  @Post('findMany')
+  async findMany(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
     if (guardFilter) {
       this.mergeFilters(filter, guardFilter);
     }
 
-    return await this.executeOrThrow(() => model.find(filter).exec());
+    return await this.executeOrThrow(() => model.find(filter, null).exec());
   }
 
   @Post('findById')
   async findById(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const filter: FilterQuery<any> = { _id };
     const guardFilter = await this.verifyAccess(req, model, 'canRead');
@@ -142,56 +182,20 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('insert')
-  async insert(
-    @Req() req: Request,
-    @Query() query: RealtimeQuery,
-    @Body() { data }: DataSingleDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
-
-    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
-
-    if (guardFilter && !guardFilter.test(data)) {
-      throw new ForbiddenException('Forbidden Document Values');
-    }
-
-    return this.executeOrThrow(() => model.create(data));
-  }
-
-  @Post('insertMany')
-  async insertMany(
-    @Req() req: Request,
-    @Query() query: RealtimeQuery,
-    @Body() { data }: DataArrayDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
-
-    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
-
-    if (guardFilter && !data.every((item) => guardFilter.test(item))) {
-      throw new ForbiddenException('Forbidden Document Values');
-    }
-
-    return this.executeOrThrow(() => model.insertMany(data));
-  }
+  // ██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
+  // ██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝
+  // ██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗
+  // ██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝
+  // ╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗
+  //  ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
 
   @Post('updateOne')
   async updateOne(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+  ): Promise<UpdateResult> {
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
     if (guardFilter) {
@@ -206,13 +210,10 @@ export class RealtimeController {
   @Post('updateMany')
   async updateMany(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+  ): Promise<UpdateResult> {
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
     if (guardFilter) {
@@ -227,13 +228,10 @@ export class RealtimeController {
   @Post('findOneAndUpdate')
   async findOneAndUpdate(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
     if (guardFilter) {
@@ -248,13 +246,10 @@ export class RealtimeController {
   @Post('findByIdAndUpdate')
   async findByIdAndUpdate(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { _id, update }: UpdateIdDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const filter: FilterQuery<any> = { _id };
     const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
@@ -262,59 +257,57 @@ export class RealtimeController {
       this.mergeFilters(filter, guardFilter);
     }
 
-    const result = await model.findOneAndUpdate(filter, update, { new: true });
+    const result = await model.findOne(filter, update, { new: true });
     if (!result) throw new NotFoundException();
     return result;
   }
 
+  // ██████╗ ███████╗██╗     ███████╗████████╗███████╗
+  // ██╔══██╗██╔════╝██║     ██╔════╝╚══██╔══╝██╔════╝
+  // ██║  ██║█████╗  ██║     █████╗     ██║   █████╗
+  // ██║  ██║██╔══╝  ██║     ██╔══╝     ██║   ██╔══╝
+  // ██████╔╝███████╗███████╗███████╗   ██║   ███████╗
+  // ╚═════╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   ╚══════╝
+
   @Post('deleteOne')
   async deleteOne(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+  ): Promise<DeleteResult> {
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canDelete');
     if (guardFilter) {
       this.mergeFilters(filter, guardFilter);
     }
 
-    await model.deleteOne(filter, update);
+    return model.deleteOne(filter, update);
   }
 
   @Post('deleteMany')
   async deleteMany(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
-  ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+  ): Promise<DeleteResult> {
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canDelete');
     if (guardFilter) {
       this.mergeFilters(filter, guardFilter);
     }
 
-    await model.deleteMany(filter);
+    return model.deleteMany(filter);
   }
 
   @Post('findOneAndDelete')
   async findOneAndDelete(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const guardFilter = await this.verifyAccess(req, model, 'canDelete');
     if (guardFilter) {
@@ -329,13 +322,10 @@ export class RealtimeController {
   @Post('findByIdAndDelete')
   async findByIdAndDelete(
     @Req() req: Request,
-    @Query() query: RealtimeQuery,
+    @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
   ) {
-    const model = this.databaseService.resolveModel(
-      query.collection,
-      query.discriminator,
-    );
+    const model = this.databaseService.getModelOrThrow(modelName);
 
     const filter: FilterQuery<any> = { _id };
     const guardFilter = await this.verifyAccess(req, model, 'canDelete');
@@ -347,6 +337,13 @@ export class RealtimeController {
     if (!result) throw new NotFoundException();
     return result;
   }
+
+  // ██╗   ██╗████████╗██╗██╗     ███████╗
+  // ██║   ██║╚══██╔══╝██║██║     ██╔════╝
+  // ██║   ██║   ██║   ██║██║     ███████╗
+  // ██║   ██║   ██║   ██║██║     ╚════██║
+  // ╚██████╔╝   ██║   ██║███████╗███████║
+  //  ╚═════╝    ╚═╝   ╚═╝╚══════╝╚══════╝
 
   private getUser = (req: Request) => {
     return this.options.accessGuard?.extractUserRest?.(req) ?? null;

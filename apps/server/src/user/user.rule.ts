@@ -13,13 +13,7 @@ export class UserRule extends RealtimeRuleGuard<User, UserDocument> {
   canCreate(user: User | null): FilterQuery<UserDocument> | boolean {
     if (!user) return false;
 
-    return {
-      display_name: {
-        $exists: true,
-        $type: "string",
-        $regex: /^.{6,}$/,
-      },
-    };
+    return false;
   }
 
   // Only authenticated user can read itself
@@ -36,15 +30,12 @@ export class UserRule extends RealtimeRuleGuard<User, UserDocument> {
     if (!user) return false;
 
     return {
-      // _id: new ObjectId(user._id),
-      age: {
-        $lte: 5,
-      },
+      _id: new ObjectId(user._id),
     };
   }
 
   // No authenicated user can delete
   canDelete(user: User | null): boolean {
-    return false;
+    return true;
   }
 }
