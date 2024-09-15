@@ -2,11 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Inject,
   InternalServerErrorException,
   NotFoundException,
+  Patch,
   Post,
+  Put,
   Query,
   Req,
   SetMetadata,
@@ -82,7 +85,7 @@ export class RealtimeController {
   // ╚██████╗██║  ██║███████╗██║  ██║   ██║   ███████╗
   //  ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝
 
-  @Post('insertOne')
+  @Put('insertOne')
   async insertOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -99,7 +102,7 @@ export class RealtimeController {
     return this.executeOrThrow(() => model.create(data));
   }
 
-  @Post('insertMany')
+  @Put('insertMany')
   async insertMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -189,7 +192,7 @@ export class RealtimeController {
   // ╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗
   //  ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
 
-  @Post('updateOne')
+  @Patch('updateOne')
   async updateOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -207,7 +210,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('updateMany')
+  @Patch('updateMany')
   async updateMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -225,7 +228,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('findOneAndUpdate')
+  @Patch('findOneAndUpdate')
   async findOneAndUpdate(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -243,7 +246,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('findByIdAndUpdate')
+  @Patch('findByIdAndUpdate')
   async findByIdAndUpdate(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -269,7 +272,7 @@ export class RealtimeController {
   // ██████╔╝███████╗███████╗███████╗   ██║   ███████╗
   // ╚═════╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   ╚══════╝
 
-  @Post('deleteOne')
+  @Delete('deleteOne')
   async deleteOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -285,7 +288,7 @@ export class RealtimeController {
     return model.deleteOne(filter, update);
   }
 
-  @Post('deleteMany')
+  @Delete('deleteMany')
   async deleteMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -301,7 +304,7 @@ export class RealtimeController {
     return model.deleteMany(filter);
   }
 
-  @Post('findOneAndDelete')
+  @Delete('findOneAndDelete')
   async findOneAndDelete(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -319,7 +322,7 @@ export class RealtimeController {
     return result;
   }
 
-  @Post('findByIdAndDelete')
+  @Delete('findByIdAndDelete')
   async findByIdAndDelete(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
