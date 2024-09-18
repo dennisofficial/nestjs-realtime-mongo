@@ -22,6 +22,13 @@ export interface RealtimeMongoOptions<
    */
   enableRestApi?: boolean;
   /**
+   * Add a `postman` endpoint to export the database endpoints to a postman collection
+   * ```
+   * http://localhost:4000/database/postman
+   * ```
+   */
+  enablePostman?: boolean;
+  /**
    * Without this, client devices essentially using REST or WS has access to all documents/collections.
    */
   accessGuard?: {

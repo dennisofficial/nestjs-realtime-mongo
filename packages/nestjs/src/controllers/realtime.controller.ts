@@ -17,19 +17,20 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import type { FilterQuery, Model, UpdateQuery } from 'mongoose';
-import { RealtimeService } from './realtime.service';
-import { RealtimeQuery } from './dto/realtime.query';
-import { RealtimeRuleGuard, Return } from './realtime.types';
+import { RealtimeService } from '../realtime.service';
+import { RealtimeQuery } from '../dto/realtime.query';
+import { RealtimeRuleGuard, Return } from '../realtime.types';
 import {
   METADATA_REALTIME_CONTROLLER,
   REALTIME_OPTIONS,
-} from './realtime.constants';
-import type { RealtimeMongoOptions } from './realtime.options';
-import { RuleService } from './services/rule.service';
+} from '../realtime.constants';
+import type { RealtimeMongoOptions } from '../realtime.options';
+import { RuleService } from '../services/rule.service';
 import { Request } from 'express';
 import { Query as MongoQuery } from 'mingo';
 import { IsArray, IsObject, IsString } from 'class-validator';
 import { DeleteResult, UpdateResult } from 'mongodb';
+import { PostMan } from '../decorators/postman.decorator';
 
 class ObjectIdDto {
   @IsString()
@@ -86,6 +87,12 @@ export class RealtimeController {
   //  ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝
 
   @Put('insertOne')
+  @PostMan<DataSingleDto>({
+    name: 'Insert One',
+    method: 'PUT',
+    folderName: 'Create',
+    body: { data: {} },
+  })
   async insertOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -103,6 +110,12 @@ export class RealtimeController {
   }
 
   @Put('insertMany')
+  @PostMan<DataArrayDto>({
+    name: 'Insert Many',
+    method: 'PUT',
+    folderName: 'Create',
+    body: { data: [] },
+  })
   async insertMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -127,6 +140,12 @@ export class RealtimeController {
   // ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝
 
   @Post('findOne')
+  @PostMan<FilterDto>({
+    name: 'Find One',
+    method: 'POST',
+    folderName: 'Read',
+    body: { filter: {} },
+  })
   async findOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -148,6 +167,12 @@ export class RealtimeController {
   }
 
   @Post('findMany')
+  @PostMan<FilterDto>({
+    name: 'Find Many',
+    method: 'POST',
+    folderName: 'Read',
+    body: { filter: {} },
+  })
   async findMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -164,6 +189,12 @@ export class RealtimeController {
   }
 
   @Post('findById')
+  @PostMan<ObjectIdDto>({
+    name: 'Find By ID',
+    method: 'POST',
+    folderName: 'Read',
+    body: { _id: '' },
+  })
   async findById(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -193,6 +224,12 @@ export class RealtimeController {
   //  ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
 
   @Patch('updateOne')
+  @PostMan<UpdateDto>({
+    name: 'Update One',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { filter: {}, update: {} },
+  })
   async updateOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -211,6 +248,12 @@ export class RealtimeController {
   }
 
   @Patch('updateMany')
+  @PostMan<UpdateDto>({
+    name: 'Update Many',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { filter: {}, update: {} },
+  })
   async updateMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -229,6 +272,12 @@ export class RealtimeController {
   }
 
   @Patch('findOneAndUpdate')
+  @PostMan<UpdateDto>({
+    name: 'Find One and Update',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { filter: {}, update: {} },
+  })
   async findOneAndUpdate(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -247,6 +296,12 @@ export class RealtimeController {
   }
 
   @Patch('findByIdAndUpdate')
+  @PostMan<UpdateIdDto>({
+    name: 'Find By ID and Update',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { _id: '', update: {} },
+  })
   async findByIdAndUpdate(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -273,6 +328,12 @@ export class RealtimeController {
   // ╚═════╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   ╚══════╝
 
   @Delete('deleteOne')
+  @PostMan<FilterDto>({
+    name: 'Delete One',
+    method: 'DELETE',
+    folderName: 'Delete',
+    body: { filter: {} },
+  })
   async deleteOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -289,6 +350,12 @@ export class RealtimeController {
   }
 
   @Delete('deleteMany')
+  @PostMan<FilterDto>({
+    name: 'Delete Many',
+    method: 'DELETE',
+    folderName: 'Delete',
+    body: { filter: {} },
+  })
   async deleteMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -305,6 +372,12 @@ export class RealtimeController {
   }
 
   @Delete('findOneAndDelete')
+  @PostMan<FilterDto>({
+    name: 'Find One and Delete',
+    method: 'DELETE',
+    folderName: 'Delete',
+    body: { filter: {} },
+  })
   async findOneAndDelete(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
@@ -323,6 +396,12 @@ export class RealtimeController {
   }
 
   @Delete('findByIdAndDelete')
+  @PostMan<ObjectIdDto>({
+    name: 'Find By ID and Delete',
+    method: 'DELETE',
+    folderName: 'Delete',
+    body: { _id: '' },
+  })
   async findByIdAndDelete(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,

@@ -1,7 +1,7 @@
 import { DynamicModule, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
-import { RealtimeController } from './realtime.controller';
+import { RealtimeController } from './controllers/realtime.controller';
 import { StreamService } from './services/stream.service';
 import { SessionService } from './services/session.service';
 import { RealtimeService } from './realtime.service';
@@ -13,6 +13,7 @@ import { DiscoveryModule } from '@nestjs/core';
 import { ExplorerService } from './services/explorer.service';
 import { GuardService } from './services/guard.service';
 import { RuleService } from './services/rule.service';
+import { PostmanController } from './controllers/postman.controller';
 
 export class RealtimeModule implements OnModuleInit {
   private logger = new Logger(this.constructor.name);
@@ -47,6 +48,10 @@ export class RealtimeModule implements OnModuleInit {
 
     if (options.enableRestApi) {
       module.controllers.push(RealtimeController);
+    }
+
+    if (options.enablePostman) {
+      module.controllers.push(PostmanController);
     }
 
     if (options.enableWebsocket) {
