@@ -3,15 +3,18 @@ import { PostManOptions } from '../decorators/postman.decorator';
 import {
   METADATA_POSTMAN_OPTIONS,
   REALTIME_CONNECTION,
+  REALTIME_OPTIONS,
 } from '../realtime.constants';
 import { RealtimeController } from './realtime.controller';
 import { Reflector } from '@nestjs/core';
 import { Connection } from 'mongoose';
+import type { RealtimeMongoOptions } from '../realtime.options';
 
 @Controller('database')
 export class PostmanController {
   constructor(
     @Inject(REALTIME_CONNECTION) private readonly connection: Connection,
+    @Inject(REALTIME_OPTIONS) private readonly options: RealtimeMongoOptions,
     private readonly reflector: Reflector,
   ) {}
 
@@ -38,7 +41,7 @@ export class PostmanController {
 
     return {
       info: {
-        name: 'Realtime Database',
+        name: this.options.postman?.collectionName ?? 'Realtime Database',
         schema:
           'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
       },

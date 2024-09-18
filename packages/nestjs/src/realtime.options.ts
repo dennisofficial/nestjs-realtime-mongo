@@ -27,7 +27,10 @@ export interface RealtimeMongoOptions<
    * http://localhost:4000/database/postman
    * ```
    */
-  enablePostman?: boolean;
+  postman?: {
+    enabled: boolean;
+    collectionName?: string;
+  };
   /**
    * Without this, client devices essentially using REST or WS has access to all documents/collections.
    */

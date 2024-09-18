@@ -34,6 +34,10 @@ const mockUser = {
         extractUserRest: () => mockUser,
         extractUserWS: () => mockUser,
       },
+      postman: {
+        enabled: process.env.NODE_ENV === "development",
+        collectionName: "Testing Database",
+      },
     }),
 
     UserModule,

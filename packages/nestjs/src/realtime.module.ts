@@ -50,7 +50,7 @@ export class RealtimeModule implements OnModuleInit {
       module.controllers.push(RealtimeController);
     }
 
-    if (options.enablePostman) {
+    if (options.postman?.enabled) {
       module.controllers.push(PostmanController);
     }
 
