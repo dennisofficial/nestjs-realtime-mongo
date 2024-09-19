@@ -9,7 +9,7 @@ import { UserModule } from "@/user/user.module";
 import { UserModel } from "@/user/user.model";
 
 const mockUser = {
-  _id: "66e5036b6426de44d501d00d",
+  _id: "66e60f6d4fc5b32c2dabe232",
   first_name: "Dennis",
   last_name: "Lysenko",
   age: 6,

@@ -15,10 +15,12 @@
     "docker": "docker compose up -d"
   },
   "dependencies": {
+    "@dl-tech/realtime-mongo-nestjs": "link:../../packages/nestjs",
     "@nestjs/bullmq": "^10.2.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/event-emitter": "^2.0.4",
+    "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/mongoose": "^10.0.10",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.4.1",
@@ -33,8 +35,7 @@
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.7.5",
-    "@dl-tech/realtime-mongo-nestjs": "link:../../packages/nestjs"
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

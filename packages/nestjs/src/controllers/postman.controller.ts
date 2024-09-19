@@ -95,7 +95,7 @@ export class PostmanController {
       variable: [
         {
           key: 'realtime_base_url',
-          value: 'http://localhost:4000/',
+          value: 'http://localhost:4000',
           type: 'string',
         },
       ],

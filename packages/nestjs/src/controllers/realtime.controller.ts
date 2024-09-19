@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   ForbiddenException,
+  HttpException,
   Inject,
   InternalServerErrorException,
   NotFoundException,
@@ -28,9 +29,11 @@ import type { RealtimeMongoOptions } from '../realtime.options';
 import { RuleService } from '../services/rule.service';
 import { Request } from 'express';
 import { Query as MongoQuery } from 'mingo';
-import { IsArray, IsObject, IsString } from 'class-validator';
+import { IsArray, IsObject, IsString, validate } from 'class-validator';
 import { DeleteResult, UpdateResult } from 'mongodb';
 import { PostMan } from '../decorators/postman.decorator';
+import { plainToInstance } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
 
 class ObjectIdDto {
   @IsString()
@@ -99,6 +102,9 @@ export class RealtimeController {
     @Body() { data }: DataSingleDto,
   ): Promise<Record<string, any>> {
     const model = this.databaseService.getModelOrThrow(modelName);
+
+    await this.validateOrThrow(model, 'full', data);
+
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !guardFilter.test(data)) {
@@ -121,6 +127,9 @@ export class RealtimeController {
     @Body() { data }: DataArrayDto,
   ): Promise<Record<string, any>[]> {
     const model = this.databaseService.getModelOrThrow(modelName);
+
+    await this.validateOrThrow(model, 'full', data);
+
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !data.every((item) => guardFilter.test(item))) {
@@ -218,7 +227,10 @@ export class RealtimeController {
   ): Promise<UpdateResult> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter },
-      (model, filter) => model.updateOne(filter, update),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.updateOne(filter, update);
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -238,7 +250,10 @@ export class RealtimeController {
   ): Promise<UpdateResult> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter },
-      (model, filter) => model.updateMany(filter, update),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.updateMany(filter, update);
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -258,7 +273,10 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter },
-      (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.findOneAndUpdate(filter, update, { new: true });
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -278,7 +296,10 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter: { _id } },
-      (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.findOneAndUpdate(filter, update, { new: true });
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -298,7 +319,10 @@ export class RealtimeController {
   ): Promise<UpdateResult> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter: { _id } },
-      (model, filter) => model.replaceOne(filter, update, { new: true }),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.replaceOne(filter, update, { new: true });
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -318,7 +342,10 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter: { _id } },
-      (model, filter) => model.findOneAndReplace(filter, update, { new: true }),
+      async (model, filter) => {
+        await this.validateOrThrow(model, 'partial', update);
+        return model.findOneAndReplace(filter, update, { new: true });
+      },
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -518,6 +545,9 @@ export class RealtimeController {
     try {
       return await fn();
     } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
       if (e instanceof Error) {
         throw new BadRequestException(e.message);
       }
@@ -544,5 +574,30 @@ export class RealtimeController {
     originalFilter.$and.push((guardFilter as any).condition);
 
     return originalFilter;
+  };
+
+  validateOrThrow = async (
+    model: Model<Record<string, any>>,
+    validateType: 'full' | 'partial',
+    data: Record<string, any>,
+  ): Promise<void> => {
+    const clazz = this.options.validation?.classValidators[model.modelName];
+    if (!clazz) return;
+
+    const instanceClass =
+      validateType === 'full' ? clazz : class extends PartialType(clazz) {};
+
+    const validateOptions = this.options.validation?.validationOptions;
+
+    const validator = new ValidationPipe(validateOptions);
+
+    const errors = await validate(
+      plainToInstance(instanceClass, data),
+      validateOptions,
+    );
+
+    if (errors.length) {
+      throw validator.createExceptionFactory()(errors);
+    }
   };
 }
