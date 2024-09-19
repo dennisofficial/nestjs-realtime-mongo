@@ -99,7 +99,6 @@ export class RealtimeController {
     @Body() { data }: DataSingleDto,
   ) {
     const model = this.databaseService.getModelOrThrow(modelName);
-
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !guardFilter.test(data)) {
@@ -122,7 +121,6 @@ export class RealtimeController {
     @Body() { data }: DataArrayDto,
   ) {
     const model = this.databaseService.getModelOrThrow(modelName);
-
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
     if (guardFilter && !data.every((item) => guardFilter.test(item))) {
@@ -151,15 +149,9 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canRead');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await this.executeOrThrow(() =>
-      model.findOne(filter).exec(),
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canRead', filter },
+      (model, filter) => model.find(filter, null).exec(),
     );
     if (!result) throw new NotFoundException();
 
@@ -178,14 +170,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canRead');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    return await this.executeOrThrow(() => model.find(filter, null).exec());
+    return this.handleDatabaseOperation(
+      { req, modelName, operation: 'canRead', filter },
+      (model, filter) => model.find(filter, null).exec(),
+    );
   }
 
   @Post('findById')
@@ -200,16 +188,9 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const filter: FilterQuery<any> = { _id };
-    const guardFilter = await this.verifyAccess(req, model, 'canRead');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await this.executeOrThrow(() =>
-      model.findOne(filter).exec(),
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canRead', filter: { _id } },
+      (model, filter) => model.findOne(filter).exec(),
     );
     if (!result) throw new NotFoundException();
 
@@ -235,14 +216,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
   ): Promise<UpdateResult> {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.updateOne(filter, update);
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter },
+      (model, filter) => model.updateOne(filter, update),
+    );
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -259,14 +236,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
   ): Promise<UpdateResult> {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.updateMany(filter, update);
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter },
+      (model, filter) => model.updateMany(filter, update),
+    );
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -283,14 +256,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.findOneAndUpdate(filter, update, { new: true });
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter },
+      (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
+    );
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -307,15 +276,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id, update }: UpdateIdDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const filter: FilterQuery<any> = { _id };
-    const guardFilter = await this.verifyAccess(req, model, 'canUpdate');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.findOne(filter, update, { new: true });
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter: { _id } },
+      (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
+    );
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -339,14 +303,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ): Promise<DeleteResult> {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    return model.deleteOne(filter);
+    return this.handleDatabaseOperation(
+      { req, modelName, operation: 'canDelete', filter },
+      (model, filter) => model.deleteOne(filter),
+    );
   }
 
   @Delete('deleteMany')
@@ -361,14 +321,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ): Promise<DeleteResult> {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    return model.deleteMany(filter);
+    return this.handleDatabaseOperation(
+      { req, modelName, operation: 'canDelete', filter },
+      (model, filter) => model.deleteMany(filter),
+    );
   }
 
   @Delete('findOneAndDelete')
@@ -383,14 +339,11 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canDelete', filter },
+      (model, filter) => model.findOneAndDelete(filter),
+    );
 
-    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.findOneAndDelete(filter);
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -407,15 +360,10 @@ export class RealtimeController {
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
   ) {
-    const model = this.databaseService.getModelOrThrow(modelName);
-
-    const filter: FilterQuery<any> = { _id };
-    const guardFilter = await this.verifyAccess(req, model, 'canDelete');
-    if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
-    }
-
-    const result = await model.findOneAndDelete(filter);
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canDelete', filter: { _id } },
+      (model, filter) => model.findOneAndDelete(filter),
+    );
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -426,6 +374,30 @@ export class RealtimeController {
   // ██║   ██║   ██║   ██║██║     ╚════██║
   // ╚██████╔╝   ██║   ██║███████╗███████║
   //  ╚═════╝    ╚═╝   ╚═╝╚══════╝╚══════╝
+
+  private async handleDatabaseOperation<T>(
+    {
+      req,
+      modelName,
+      operation,
+      filter,
+    }: {
+      req: Request;
+      modelName: string;
+      operation: keyof RealtimeRuleGuard<any, any>;
+      filter: FilterQuery<any>;
+    },
+    dbOperation: (model: Model<any>, filter: FilterQuery<any>) => Promise<T>,
+  ): Promise<T> {
+    const model = this.databaseService.getModelOrThrow(modelName);
+    const guardFilter = await this.verifyAccess(req, model, operation);
+
+    if (guardFilter) {
+      this.mergeFilters(filter, guardFilter);
+    }
+
+    return this.executeOrThrow(() => dbOperation(model, filter));
+  }
 
   private getUser = (req: Request) => {
     return this.options.accessGuard?.extractUserRest?.(req) ?? null;

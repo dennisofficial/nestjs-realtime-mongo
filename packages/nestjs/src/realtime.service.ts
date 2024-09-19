@@ -7,11 +7,7 @@ import {
 import type { Connection, Model } from 'mongoose';
 import { REALTIME_CONNECTION } from './realtime.constants';
 import { SessionService } from './services/session.service';
-import {
-  DbSocket,
-  DiscriminatorMapping,
-  RealtimeMongoSession,
-} from './realtime.types';
+import { DbSocket, RealtimeMongoSession } from './realtime.types';
 
 @Injectable()
 export class RealtimeService {
@@ -60,17 +56,5 @@ export class RealtimeService {
     }
 
     return model;
-  }
-
-  getDiscriminatorMapping(
-    model: Model<any>,
-    discriminatorValue: string,
-  ): DiscriminatorMapping | undefined {
-    const discriminator = Object.values(model.discriminators ?? {}).find(
-      (discriminator) =>
-        (discriminator.schema as any).discriminatorMapping.value ===
-        discriminatorValue,
-    );
-    return (discriminator?.schema as any)?.discriminatorMapping;
   }
 }

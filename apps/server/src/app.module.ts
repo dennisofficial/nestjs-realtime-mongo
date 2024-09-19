@@ -6,6 +6,7 @@ import { DatabaseEventService } from "@/database-event.service";
 import { APP_GUARD } from "@nestjs/core";
 import { AppGuard } from "@/app.guard";
 import { UserModule } from "@/user/user.module";
+import { UserModel } from "@/user/user.model";
 
 const mockUser = {
   _id: "66e5036b6426de44d501d00d",
@@ -37,6 +38,11 @@ const mockUser = {
       postman: {
         enabled: process.env.NODE_ENV === "development",
         collectionName: "Testing Database",
+      },
+      validation: {
+        classValidators: {
+          [UserModel.name]: UserModel,
+        },
       },
     }),
 

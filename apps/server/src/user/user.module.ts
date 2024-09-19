@@ -5,7 +5,9 @@ import { UserRule } from "@/user/user.rule";
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: UserModel.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: UserModel.name, schema: UserSchema, collection: "users" },
+    ]),
   ],
   providers: [UserRule],
 })
