@@ -17,7 +17,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { Document, FilterQuery, Model } from 'mongoose';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeQuery } from '../dto/realtime.query';
 import { RealtimeRuleGuard, Return } from '../realtime.types';
@@ -29,48 +29,20 @@ import type { RealtimeMongoOptions } from '../realtime.options';
 import { RuleService } from '../services/rule.service';
 import { Request } from 'express';
 import { Query as MongoQuery } from 'mingo';
-import { IsArray, IsObject, IsString, validate } from 'class-validator';
+import { validate } from 'class-validator';
 import { DeleteResult, UpdateResult } from 'mongodb';
 import { PostMan } from '../decorators/postman.decorator';
 import { plainToInstance } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
-
-class ObjectIdDto {
-  @IsString()
-  _id: string;
-}
-
-class FilterDto {
-  @IsObject({ each: false })
-  filter: FilterQuery<any>;
-}
-
-class DataSingleDto {
-  @IsObject({ each: false })
-  data: any;
-}
-
-class DataArrayDto {
-  @IsArray()
-  @IsObject({ each: true })
-  data: any[];
-}
-
-class UpdateIdDto {
-  @IsString()
-  _id: string;
-
-  @IsObject({ each: false })
-  update: UpdateQuery<any>;
-}
-
-class UpdateDto {
-  @IsObject({ each: false })
-  filter: FilterQuery<any>;
-
-  @IsObject({ each: false })
-  update: UpdateQuery<any>;
-}
+import {
+  DataArrayDto,
+  DataSingleDto,
+  FilterDto,
+  ObjectIdDto,
+  ReplaceDto,
+  UpdateDto,
+  UpdateIdDto,
+} from '../dto/controller.dto';
 
 @Controller('database')
 @SetMetadata(METADATA_REALTIME_CONTROLLER, true)
@@ -160,10 +132,9 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.find(filter, null),
+      (model, filter) => model.findOne(filter, null),
     );
     if (!result) throw new NotFoundException();
-
     return result;
   }
 
@@ -202,7 +173,6 @@ export class RealtimeController {
       (model, filter) => model.findOne(filter),
     );
     if (!result) throw new NotFoundException();
-
     return result;
   }
 
@@ -306,22 +276,22 @@ export class RealtimeController {
   }
 
   @Patch('replaceOne')
-  @PostMan<UpdateDto>({
+  @PostMan<ReplaceDto>({
     name: 'Replace One',
     method: 'PATCH',
     folderName: 'Replace',
-    body: { filter: {}, update: {} },
+    body: { filter: {}, replace: {} },
   })
   async replaceOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { _id, update }: UpdateIdDto,
+    @Body() { filter, replace }: ReplaceDto,
   ): Promise<UpdateResult> {
     const result = await this.handleDatabaseOperation(
-      { req, modelName, operation: 'canUpdate', filter: { _id } },
+      { req, modelName, operation: 'canUpdate', filter },
       async (model, filter) => {
-        await this.validateOrThrow(model, 'partial', update);
-        return model.replaceOne(filter, update, { new: true });
+        await this.validateOrThrow(model, 'partial', replace);
+        return model.replaceOne(filter, replace, { new: true });
       },
     );
     if (!result) throw new NotFoundException();
@@ -329,22 +299,22 @@ export class RealtimeController {
   }
 
   @Patch('findOneAndReplace')
-  @PostMan<UpdateDto>({
+  @PostMan<ReplaceDto>({
     name: 'Find One and Replace',
     method: 'PATCH',
     folderName: 'Replace',
-    body: { filter: {}, update: {} },
+    body: { filter: {}, replace: {} },
   })
   async findOneAndReplace(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { _id, update }: UpdateIdDto,
+    @Body() { filter, replace }: ReplaceDto,
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
-      { req, modelName, operation: 'canUpdate', filter: { _id } },
+      { req, modelName, operation: 'canUpdate', filter },
       async (model, filter) => {
-        await this.validateOrThrow(model, 'partial', update);
-        return model.findOneAndReplace(filter, update, { new: true });
+        await this.validateOrThrow(model, 'partial', replace);
+        return model.findOneAndReplace(filter, replace, { new: true });
       },
     );
     if (!result) throw new NotFoundException();
@@ -576,7 +546,7 @@ export class RealtimeController {
     return originalFilter;
   };
 
-  validateOrThrow = async (
+  private validateOrThrow = async (
     model: Model<Record<string, any>>,
     validateType: 'full' | 'partial',
     data: Record<string, any>,

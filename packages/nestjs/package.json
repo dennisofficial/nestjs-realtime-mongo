@@ -22,14 +22,15 @@
     "Database",
     "NoSQL",
     "WebSocket",
-    "Socket.io"
+    "Socket.io",
+    "Server"
   ],
   "author": "Dennis Lysenko",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/dennisofficial/nestjs-realtime-mongo/issues"
   },
-  "homepage": "https://github.com/dennisofficial/nestjs-realtime-mongo#readme",
+  "homepage": "https://github.com/dennisofficial/nestjs-realtime-mongo/tree/main/packages/nestjs#readme",
   "dependencies": {
     "@nestjs/mapped-types": "^2.0.5",
     "class-transformer": "^0.5.1",

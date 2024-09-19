@@ -13,7 +13,7 @@ export class UserRule extends RealtimeRuleGuard<User, UserDocument> {
   canCreate(user: User | null): FilterQuery<UserDocument> | boolean {
     if (!user) return false;
 
-    return false;
+    return true;
   }
 
   // Only authenticated user can read itself

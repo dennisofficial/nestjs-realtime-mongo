@@ -7,6 +7,9 @@ async function bootstrap() {
     forceCloseConnections: false,
   });
 
+  app.enableCors({
+    origin: "*",
+  });
   app.enableShutdownHooks();
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
