@@ -16,7 +16,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import type { FilterQuery, Model, UpdateQuery } from 'mongoose';
+import type { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeQuery } from '../dto/realtime.query';
 import { RealtimeRuleGuard, Return } from '../realtime.types';
@@ -405,9 +405,9 @@ export class RealtimeController {
 
   private verifyAccess = async (
     req: Request,
-    model: Model<any>,
-    operation: keyof RealtimeRuleGuard<any, any>,
-  ) => {
+    model: Model<Record<string, any>>,
+    operation: keyof RealtimeRuleGuard<Record<string, any>, Document>,
+  ): Promise<MongoQuery | null> => {
     const user = this.getUser(req);
     const guard = await this.ruleService.invokeRules(
       model.modelName,
@@ -422,6 +422,8 @@ export class RealtimeController {
     if (typeof guard === 'object') {
       return new MongoQuery(guard);
     }
+
+    return null;
   };
 
   private executeOrThrow = async <F extends () => Promise<any>>(
@@ -437,7 +439,10 @@ export class RealtimeController {
     }
   };
 
-  private mergeFilters = (first: FilterQuery<any>, second: MongoQuery) => {
+  private mergeFilters = (
+    first: FilterQuery<Record<string, any>>,
+    second: MongoQuery,
+  ) => {
     if (!first.$and) {
       first.$and = [];
     }

@@ -18,7 +18,7 @@ export class RealtimeService {
 
   getModelSession = (
     client: DbSocket,
-  ): [RealtimeMongoSession, Model<any>] | undefined => {
+  ): [RealtimeMongoSession, Model<Record<string, any>>] | undefined => {
     const session = this.sessionService.find(client);
     if (!session) {
       const exception = new BadRequestException(
@@ -42,13 +42,13 @@ export class RealtimeService {
     return [session, model];
   };
 
-  getModel(modelName: string): Model<any> | undefined {
+  getModel(modelName: string): Model<Record<string, any>> | undefined {
     return Object.values(this.mongoCon.models).find(
       (model) => model.modelName === modelName,
     );
   }
 
-  getModelOrThrow(modelName: string): Model<any> {
+  getModelOrThrow(modelName: string): Model<Record<string, any>> {
     const model = this.getModel(modelName);
 
     if (!model) {
