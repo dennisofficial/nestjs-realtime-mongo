@@ -8,6 +8,14 @@ import {
   UpdateIdDto,
 } from './types';
 import { DeleteResult, UpdateResult } from 'mongodb';
+import {
+  ApiError,
+  ConflictError,
+  InternalServerError,
+  ServiceUnavailableError,
+  UnauthorizedError,
+  ValidationError,
+} from './errors';
 
 export interface RealtimeRestClientOptions {
   baseURL: string;
@@ -51,7 +59,13 @@ export class RealtimeRestClient<
           return Promise.reject(config);
         }
 
-        if (config.response.status === 404) {
+        const { status, data } = config.response;
+
+        if (!this.isException(data)) {
+          return Promise.reject(config);
+        }
+
+        if (status === 404) {
           return Promise.resolve({
             ...config,
             response: {
@@ -61,7 +75,36 @@ export class RealtimeRestClient<
           });
         }
 
-        return Promise.reject(config);
+        switch (status) {
+          case 400:
+            return Promise.reject(
+              new ValidationError('Validation Error', data.message),
+            );
+          case 401:
+            return Promise.reject(
+              new UnauthorizedError('Auth Failed', 401, data.message),
+            );
+          case 403:
+            return Promise.reject(
+              new UnauthorizedError('Forbidden', 403, data.message),
+            );
+          case 409:
+            return Promise.reject(
+              new ConflictError('Conflict Error', data.message),
+            );
+          case 503:
+            return Promise.reject(
+              new ServiceUnavailableError('Service Unavailable', data.message),
+            );
+          case 500:
+            return Promise.reject(
+              new InternalServerError('Internal Server Error', data.message),
+            );
+          default:
+            return Promise.reject(
+              new ApiError('An error occurred', status, data.message),
+            );
+        }
       },
     );
   }

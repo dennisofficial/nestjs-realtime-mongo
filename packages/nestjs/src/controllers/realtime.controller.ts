@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   ForbiddenException,
@@ -13,11 +14,12 @@ import {
   Put,
   Query,
   Req,
+  ServiceUnavailableException,
   SetMetadata,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { Document, FilterQuery, Model } from 'mongoose';
+import mongoose, { Document, FilterQuery, Model } from 'mongoose';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeQuery } from '../dto/realtime.query';
 import { RealtimeRuleGuard, Return } from '../realtime.types';
@@ -30,7 +32,7 @@ import { RuleService } from '../services/rule.service';
 import { Request } from 'express';
 import { Query as MongoQuery } from 'mingo';
 import { validate } from 'class-validator';
-import { DeleteResult, UpdateResult } from 'mongodb';
+import { DeleteResult, MongoError, UpdateResult } from 'mongodb';
 import { PostMan } from '../decorators/postman.decorator';
 import { plainToInstance } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
@@ -506,8 +508,11 @@ export class RealtimeController {
    *
    * @returns A promise that resolves with the result of the function.
    *
-   * @throws {BadRequestException} - Thrown if the function throws an error with a message.
-   * @throws {InternalServerErrorException} - Thrown for any unexpected errors without a message.
+   * @throws {BadRequestException} - Thrown if a validation or cast error occurs.
+   * @throws {ConflictException} - Thrown if a duplicate key error occurs (e.g., unique constraint violation).
+   * @throws {NotFoundException} - Thrown if a document is not found when it should exist.
+   * @throws {ServiceUnavailableException} - Thrown if there is a database connection error.
+   * @throws {InternalServerErrorException} - Thrown for any unexpected server errors.
    */
   private executeOrThrow = async <F extends () => Promise<any>>(
     fn: F,
@@ -516,11 +521,48 @@ export class RealtimeController {
       return await fn();
     } catch (e) {
       if (e instanceof HttpException) {
-        throw e;
+        throw e; // Re-throw existing HTTP exceptions
       }
-      if (e instanceof Error) {
+
+      // Handle Mongoose validation errors
+      if (e instanceof mongoose.Error.ValidationError) {
         throw new BadRequestException(e.message);
       }
+
+      // Handle duplicate key errors (e.g., unique constraint violations)
+      if (e instanceof MongoError && e.code === 11000) {
+        // Duplicate key error code is 11000
+        throw new ConflictException(
+          'Duplicate key error: A record with this value already exists.',
+        );
+      }
+
+      // Handle Mongoose cast errors (e.g., invalid ObjectId)
+      if (e instanceof mongoose.Error.CastError) {
+        throw new BadRequestException(
+          `Invalid value for ${e.path}: ${e.value}`,
+        );
+      }
+
+      // Handle Mongoose document not found errors
+      if (e instanceof mongoose.Error.DocumentNotFoundError) {
+        throw new NotFoundException(e.message);
+      }
+
+      // Handle MongoDB connection errors
+      if (
+        e instanceof MongoError &&
+        e.message.match(/failed to connect to server .* on first connect/)
+      ) {
+        throw new ServiceUnavailableException('Database connection error.');
+      }
+
+      // For other types of errors, throw Internal Server Error
+      if (e instanceof Error) {
+        throw new InternalServerErrorException(e.message);
+      }
+
+      // If the error is not recognized, throw a generic Internal Server Error
       throw new InternalServerErrorException('An unexpected error occurred.');
     }
   };
