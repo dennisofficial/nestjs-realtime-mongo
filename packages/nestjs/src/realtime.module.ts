@@ -73,7 +73,8 @@ export class RealtimeModule implements OnModuleInit {
       Object.values(this.conn.models).forEach((model) => {
         const validationExists =
           !!this.options.validation?.classValidators[model.modelName];
-        if (!validationExists) {
+        // We check for undefined, because `null` is allowed to silence the warning
+        if (validationExists === undefined) {
           this.logger.warn(
             `Model Name: ${model.modelName} validation schema doesn't exist`,
           );

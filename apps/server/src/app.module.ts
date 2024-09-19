@@ -41,7 +41,11 @@ const mockUser = {
       },
       validation: {
         classValidators: {
-          [UserModel.name]: UserModel,
+          [UserModel.name]: null,
+        },
+        validationOptions: {
+          transform: true,
+          whitelist: true,
         },
       },
     }),

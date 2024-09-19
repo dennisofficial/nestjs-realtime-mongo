@@ -1,7 +1,7 @@
 import { Type } from '@nestjs/common';
 import type { Request } from 'express';
 import type { Socket } from 'socket.io';
-import type { ValidationOptions } from 'class-validator';
+import { ValidationPipeOptions } from '@nestjs/common/pipes/validation.pipe';
 
 export interface RealtimeMongoOptions<
   User extends Record<string, any> | undefined = any,
@@ -64,11 +64,18 @@ export interface RealtimeMongoOptions<
      *   [UserModel.name]: UserDto,
      *   [AdminUserModel.name]: AdminUserDto,
      * }
+     *
+     * If a specific model does not require validation, you can supply `null` to suppress the warning.
+     * @example
+     * {
+     *   [UserModel.name]: UserDto,
+     *   [ProductModel.name]: null,
+     * }
      */
-    classValidators: Record<string, Type>;
+    classValidators: Record<string, Type | null>;
     /**
      * Validation Options to use
      */
-    validationOptions?: ValidationOptions;
+    validationOptions?: ValidationPipeOptions;
   };
 }
