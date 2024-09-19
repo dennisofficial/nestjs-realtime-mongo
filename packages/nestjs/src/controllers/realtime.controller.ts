@@ -288,7 +288,7 @@ export class RealtimeController {
   @PostMan<UpdateDto>({
     name: 'Replace One',
     method: 'PATCH',
-    folderName: 'Update',
+    folderName: 'Replace',
     body: { filter: {}, update: {} },
   })
   async replaceOne(
@@ -308,7 +308,7 @@ export class RealtimeController {
   @PostMan<UpdateDto>({
     name: 'Find One and Replace',
     method: 'PATCH',
-    folderName: 'Update',
+    folderName: 'Replace',
     body: { filter: {}, update: {} },
   })
   async findOneAndReplace(

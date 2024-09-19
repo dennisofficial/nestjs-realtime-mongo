@@ -5,7 +5,7 @@ export interface PostManOptions<
 > {
   name: string;
   method: 'POST' | 'GET' | 'DELETE' | 'PATCH' | 'PUT';
-  folderName: 'Create' | 'Read' | 'Update' | 'Delete';
+  folderName: 'Create' | 'Read' | 'Update' | 'Delete' | 'Replace';
   body: DTO;
   endpoint: string;
 }
