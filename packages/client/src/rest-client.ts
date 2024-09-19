@@ -20,7 +20,8 @@ import {
 export interface RealtimeRestClientOptions {
   baseURL: string;
   getIdToken?: () => Promise<string | undefined>;
-  additionalHeader?: (idToken: string | undefined) => AxiosHeaders;
+  authHeaderConverter?: (idToken: string | undefined) => AxiosHeaders;
+  headers?: AxiosHeaders;
   withCredentials?: boolean;
 }
 
@@ -33,27 +34,26 @@ export class RealtimeRestClient<
     this.axiosInstance = axios.create({
       baseURL: options.baseURL,
       headers: {
-        ...options.additionalHeader,
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...options.headers,
       },
       withCredentials: options.withCredentials,
     });
 
+    this.axiosInstance.interceptors.request.use(async (r) => {
+      const idToken = await options.getIdToken?.();
+      if (idToken) {
+        const additionalHeader = options.authHeaderConverter
+          ? options.authHeaderConverter(idToken)
+          : {};
+        r.headers = r.headers.concat(additionalHeader);
+      }
+      return r;
+    });
+
     this.axiosInstance.interceptors.response.use(
-      async (r) => {
-        const idToken = await options.getIdToken?.();
-        if (idToken) {
-          const additionalHeader = options.additionalHeader
-            ? options.additionalHeader(idToken)
-            : {};
-          r.headers = {
-            ...r.headers,
-            ...additionalHeader,
-          };
-        }
-        return r;
-      },
+      async (r) => r,
       (config) => {
         if (!isAxiosError(config) || !config.response) {
           return Promise.reject(config);
