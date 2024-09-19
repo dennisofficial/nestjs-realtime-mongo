@@ -16,7 +16,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import type { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeQuery } from '../dto/realtime.query';
 import { RealtimeRuleGuard, Return } from '../realtime.types';
@@ -97,7 +97,7 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { data }: DataSingleDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const model = this.databaseService.getModelOrThrow(modelName);
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
@@ -119,7 +119,7 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { data }: DataArrayDto,
-  ) {
+  ): Promise<Record<string, any>[]> {
     const model = this.databaseService.getModelOrThrow(modelName);
     const guardFilter = await this.verifyAccess(req, model, 'canCreate');
 
@@ -148,10 +148,10 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.find(filter, null).exec(),
+      (model, filter) => model.find(filter, null),
     );
     if (!result) throw new NotFoundException();
 
@@ -169,10 +169,10 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
-  ) {
+  ): Promise<Record<string, any>[]> {
     return this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.find(filter, null).exec(),
+      (model, filter) => model.find(filter, null),
     );
   }
 
@@ -187,10 +187,10 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter: { _id } },
-      (model, filter) => model.findOne(filter).exec(),
+      (model, filter) => model.findOne(filter),
     );
     if (!result) throw new NotFoundException();
 
@@ -255,7 +255,7 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter, update }: UpdateDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter },
       (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
@@ -275,10 +275,50 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id, update }: UpdateIdDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canUpdate', filter: { _id } },
       (model, filter) => model.findOneAndUpdate(filter, update, { new: true }),
+    );
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
+  @Patch('replaceOne')
+  @PostMan<UpdateDto>({
+    name: 'Replace One',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { filter: {}, update: {} },
+  })
+  async replaceOne(
+    @Req() req: Request,
+    @Query() { modelName }: RealtimeQuery,
+    @Body() { _id, update }: UpdateIdDto,
+  ): Promise<UpdateResult> {
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter: { _id } },
+      (model, filter) => model.replaceOne(filter, update, { new: true }),
+    );
+    if (!result) throw new NotFoundException();
+    return result;
+  }
+
+  @Patch('findOneAndReplace')
+  @PostMan<UpdateDto>({
+    name: 'Find One and Replace',
+    method: 'PATCH',
+    folderName: 'Update',
+    body: { filter: {}, update: {} },
+  })
+  async findOneAndReplace(
+    @Req() req: Request,
+    @Query() { modelName }: RealtimeQuery,
+    @Body() { _id, update }: UpdateIdDto,
+  ): Promise<Record<string, any>> {
+    const result = await this.handleDatabaseOperation(
+      { req, modelName, operation: 'canUpdate', filter: { _id } },
+      (model, filter) => model.findOneAndReplace(filter, update, { new: true }),
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -338,7 +378,7 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { filter }: FilterDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canDelete', filter },
       (model, filter) => model.findOneAndDelete(filter),
@@ -359,7 +399,7 @@ export class RealtimeController {
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
     @Body() { _id }: ObjectIdDto,
-  ) {
+  ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canDelete', filter: { _id } },
       (model, filter) => model.findOneAndDelete(filter),
