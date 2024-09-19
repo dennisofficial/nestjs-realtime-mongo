@@ -375,6 +375,24 @@ export class RealtimeController {
   // ╚██████╔╝   ██║   ██║███████╗███████║
   //  ╚═════╝    ╚═╝   ╚═╝╚══════╝╚══════╝
 
+  /**
+   * Handles common database operations with access control and error handling.
+   *
+   * @template T - The type of the result returned by the database operation.
+   *
+   * @param params - The parameters required for the database operation.
+   * @param params.req - The incoming HTTP request.
+   * @param params.modelName - The name of the Mongoose model to operate on.
+   * @param params.operation - The access control operation to verify (e.g., 'canRead', 'canUpdate').
+   * @param params.filter - The MongoDB filter query for the operation.
+   * @param dbOperation - The database operation function to execute.
+   *
+   * @returns A promise that resolves with the result of the database operation.
+   *
+   * @throws {ForbiddenException} - Thrown if access is denied by the guard.
+   * @throws {BadRequestException} - Thrown if the database operation encounters an error.
+   * @throws {InternalServerErrorException} - Thrown for any unexpected errors.
+   */
   private async handleDatabaseOperation<T>(
     {
       req,
@@ -399,10 +417,28 @@ export class RealtimeController {
     return this.executeOrThrow(() => dbOperation(model, filter));
   }
 
+  /**
+   * Extracts the user from the HTTP request using the access guard's extraction method.
+   *
+   * @param req - The incoming HTTP request.
+   *
+   * @returns The user object extracted from the request or null if not available.
+   */
   private getUser = (req: Request) => {
     return this.options.accessGuard?.extractUserRest?.(req) ?? null;
   };
 
+  /**
+   * Verifies access permissions for the given operation on the model.
+   *
+   * @param req - The incoming HTTP request.
+   * @param model - The Mongoose model on which the operation is to be performed.
+   * @param operation - The access control operation to verify (e.g., 'canRead', 'canCreate').
+   *
+   * @returns A MongoQuery representing the guard's filter conditions or null if access is fully granted.
+   *
+   * @throws {ForbiddenException} - Thrown if access is explicitly denied by the guard.
+   */
   private verifyAccess = async (
     req: Request,
     model: Model<Record<string, any>>,
@@ -416,7 +452,7 @@ export class RealtimeController {
     );
 
     if (typeof guard === 'boolean' && !guard) {
-      throw new ForbiddenException();
+      throw new ForbiddenException('Access denied by guard.');
     }
 
     if (typeof guard === 'object') {
@@ -426,6 +462,16 @@ export class RealtimeController {
     return null;
   };
 
+  /**
+   * Executes a function that returns a promise and handles any errors by throwing appropriate HTTP exceptions.
+   *
+   * @param fn - The asynchronous function to execute.
+   *
+   * @returns A promise that resolves with the result of the function.
+   *
+   * @throws {BadRequestException} - Thrown if the function throws an error with a message.
+   * @throws {InternalServerErrorException} - Thrown for any unexpected errors without a message.
+   */
   private executeOrThrow = async <F extends () => Promise<any>>(
     fn: F,
   ): Promise<Return<F>> => {
@@ -435,20 +481,28 @@ export class RealtimeController {
       if (e instanceof Error) {
         throw new BadRequestException(e.message);
       }
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('An unexpected error occurred.');
     }
   };
 
+  /**
+   * Merges the original filter query with the guard's filter conditions using a logical AND operation.
+   *
+   * @param originalFilter - The original MongoDB filter query.
+   * @param guardFilter - The MongoQuery object representing the guard's filter conditions.
+   *
+   * @returns The combined filter query with both the original and guard conditions.
+   */
   private mergeFilters = (
-    first: FilterQuery<Record<string, any>>,
-    second: MongoQuery,
-  ) => {
-    if (!first.$and) {
-      first.$and = [];
+    originalFilter: FilterQuery<Record<string, any>>,
+    guardFilter: MongoQuery,
+  ): FilterQuery<Record<string, any>> => {
+    if (!originalFilter.$and) {
+      originalFilter.$and = [];
     }
 
-    first.$and.push((second as any).condition);
+    originalFilter.$and.push((guardFilter as any).condition);
 
-    return first;
+    return originalFilter;
   };
 }
