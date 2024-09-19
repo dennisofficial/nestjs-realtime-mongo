@@ -211,7 +211,6 @@ export interface RealtimeMongoOptions<
      * @returns The user object or a promise that resolves to the user object; `null` or `undefined` if unauthenticated.
      */
     extractUserRest?: (req: Request) => User | Promise<User>;
-
     /**
      * Function to extract the user context from a WebSocket handshake.
      *
@@ -220,6 +219,54 @@ export interface RealtimeMongoOptions<
      */
     extractUserWS?: (socket: Readonly<Socket>) => User | Promise<User>;
   };
+  /**
+   * Configuration for validating incoming data during Create and Update operations.
+   *
+   * **Purpose**:
+   * The `validation` object allows you to enable and configure data validation within the module.
+   * It leverages `class-validator` and NestJS's `ValidationPipe` to ensure that incoming data
+   * adheres to defined rules and structures before being processed or saved to the database.
+   *
+   * **Components**:
+   * - `classValidators`: A mapping between model names and their corresponding DTO classes used for validation.
+   * - `validationOptions`: Options to customize the behavior of the `ValidationPipe` during validation.
+   *
+   * **Usage**:
+   * By providing DTO classes in `classValidators`, you enable validation for specific models.
+   * The `validationOptions` allow you to fine-tune how validation is performed, such as enabling transformation,
+   * whitelisting properties, and configuring error handling.
+   *
+   * **Example Configuration**:
+   * ```typescript
+   * validation: {
+   *   classValidators: {
+   *     [UserModel.name]: UserDto,
+   *     [ProductModel.name]: ProductDto,
+   *   },
+   *   validationOptions: {
+   *     transform: true,
+   *     whitelist: true,
+   *     forbidNonWhitelisted: true,
+   *   },
+   * },
+   * ```
+   *
+   * **Notes**:
+   * - **Optional Configuration**: The `validation` object is optional. If not provided, validation will not be applied to incoming data.
+   * - **Security Enhancement**: Enabling validation helps prevent invalid or malicious data from entering your system, enhancing security and data integrity.
+   * - **Model Alignment**: Ensure that your DTO classes accurately reflect the structure and constraints of your Mongoose models.
+   * - **Partial Validation on Updates**: During Update operations, the module uses a partial version of the DTO class to validate only the provided fields.
+   * - **Disabling Validation for Specific Models**: Assign `null` to a model in `classValidators` to disable validation for that model.
+   *
+   * **References**:
+   * - **Class Validator Documentation**: [class-validator](https://github.com/typestack/class-validator)
+   * - **NestJS ValidationPipe Options**: [ValidationPipe](https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe)
+   *
+   * **Tips**:
+   * - **Transform Payloads**: Enabling `transform` in `validationOptions` converts plain objects into instances of the DTO classes.
+   * - **Whitelist Properties**: Setting `whitelist: true` strips properties that do not have any decorators in the DTO, preventing unexpected data.
+   * - **Strict Validation**: Using `forbidNonWhitelisted: true` throws an error if non-whitelisted properties are present, enforcing strict data contracts.
+   */
   validation?: {
     /**
      * A mapping between model names and their corresponding `class-validator` DTO classes for input validation.
