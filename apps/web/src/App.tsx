@@ -20,19 +20,7 @@ function App() {
         filter: {},
       });
 
-      if (!results.length) {
-        const newUser = await databaseRest.insertOne('AdminUserModel', {
-          data: {
-            first_name: 'Admin',
-            last_name: 'User',
-            display_name: 'Admin Super God',
-            age: 12,
-            power_level: 100,
-          },
-        });
-
-        console.log(newUser);
-      }
+      results.forEach(({ created_at }) => console.log(created_at));
     })();
 
     return () => {

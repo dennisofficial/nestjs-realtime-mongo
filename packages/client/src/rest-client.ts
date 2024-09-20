@@ -197,7 +197,7 @@ export class RealtimeRestClient<
     payload: DataArrayDto<
       Omit<ModelMap[ModelName], keyof CreateModelExclusion>
     >,
-  ): Promise<ModelMap[ModelName][]> => {
+  ): Promise<Array<ModelMap[ModelName]>> => {
     const response = await this.axiosInstance.put(
       'database/insertMany',
       payload,
@@ -272,7 +272,7 @@ export class RealtimeRestClient<
   findMany = async <ModelName extends keyof ModelMap>(
     modelName: ModelName,
     payload: FilterDto<ModelMap[ModelName]>,
-  ): Promise<ModelMap[ModelName][]> => {
+  ): Promise<Array<ModelMap[ModelName]>> => {
     const response = await this.axiosInstance.post(
       'database/findMany',
       payload,
