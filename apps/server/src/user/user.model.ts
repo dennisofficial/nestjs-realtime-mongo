@@ -3,7 +3,10 @@ import { HydratedDocumentFromSchema } from 'mongoose';
 import { User } from '@/user/user.types';
 import { IsNumber, IsString } from 'class-validator';
 
-@Schema({ discriminatorKey: 'role' })
+@Schema({
+  discriminatorKey: 'role',
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+})
 export class UserModel extends User {
   @Prop({ required: true })
   @IsString()
@@ -23,6 +26,9 @@ export class UserModel extends User {
 
   @Prop({ type: String })
   user_role: string;
+
+  @Prop()
+  signup_date: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);

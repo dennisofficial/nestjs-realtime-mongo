@@ -24,7 +24,7 @@ interface RealtimeResult {
 export class RealtimeSocketClient<
   ModelMap extends Record<string, any> = Record<string, any>,
 > {
-  constructor(private readonly options: RealtimeClientOptions) {}
+  constructor(private readonly options: RealtimeClientOptions<ModelMap>) {}
 
   onQueryUpdate = <
     ModelName extends keyof ModelMap,

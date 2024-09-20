@@ -1,7 +1,21 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import ts from 'typescript';
+import { defineConfig } from 'vite';
+import { vitePluginTypescriptTransform } from 'vite-plugin-typescript-transform';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-})
+  plugins: [
+    vitePluginTypescriptTransform({
+      enforce: 'pre',
+      filter: {
+        files: {
+          include: /\.ts$/,
+        },
+      },
+      tsconfig: {
+        override: {
+          target: ts.ScriptTarget.ES2021,
+        },
+      },
+    }),
+  ],
+});

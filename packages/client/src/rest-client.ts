@@ -23,7 +23,7 @@ export class RealtimeRestClient<
 > {
   private axiosInstance: AxiosInstance;
 
-  constructor(options: RealtimeClientOptions) {
+  constructor(options: RealtimeClientOptions<ModelMap>) {
     this.axiosInstance = axios.create({
       baseURL: options.baseURL,
       headers: {

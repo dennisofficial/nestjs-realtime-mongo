@@ -1,6 +1,10 @@
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import { AxiosHeaders } from 'axios';
 
+export interface Type<T = any> extends Function {
+  new (...args: any[]): T;
+}
+
 export interface ObjectIdDto {
   _id: string;
 }
@@ -27,7 +31,9 @@ export interface UpdateDto<T extends Record<string, any>> {
   update: UpdateQuery<T>;
 }
 
-export interface RealtimeClientOptions {
+export interface RealtimeClientOptions<
+  ModelMap extends Record<string, any> = Record<string, any>,
+> {
   baseURL: string;
   // A Header Factory function that will run on every request made. This is where you should return your auth headers.
   headers?: AxiosHeaders;
@@ -35,4 +41,6 @@ export interface RealtimeClientOptions {
   wsAuth?: () => Promise<Record<string, any>> | Record<string, any>;
   // Turn on cookies for the rest client, and socket client.
   withCredentials?: boolean;
+  // `class-validator` classes to be used to deserialize the data coming in
+  deserializers?: Record<keyof ModelMap, Type>;
 }

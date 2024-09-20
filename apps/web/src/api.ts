@@ -1,10 +1,18 @@
-import 'reflect-metadata';
-import {
-  RealtimeRestClient,
-  RealtimeSocketClient,
-} from '@dl-tech/realtime-mongo-client';
+import { Transform } from 'class-transformer';
+import { initializeRealtimeMongo } from '@dl-tech/realtime-mongo-client';
 
-class User {
+export class BaseMongo {
+  _id!: string;
+  __v!: number;
+
+  @Transform(({ value }) => new Date(value))
+  created_at!: Date;
+
+  @Transform(({ value }) => new Date(value))
+  updated_at!: Date;
+}
+
+class User extends BaseMongo {
   first_name!: string;
   last_name!: string;
   display_name!: string;
@@ -15,15 +23,10 @@ class Admin extends User {
   power_level!: number;
 }
 
-type ModelMap = {
-  UserModel: User;
-  AdminUserModel: Admin;
-};
-
-export const databaseRest = new RealtimeRestClient<ModelMap>({
-  baseURL: 'http://localhost:4000',
-});
-
-export const databaseSocket = new RealtimeSocketClient<ModelMap>({
-  baseURL: 'http://localhost:4000',
-});
+export const { databaseSocket, databaseRest } = initializeRealtimeMongo(
+  { baseURL: 'http://localhost:4000' },
+  {
+    UserModel: User,
+    AdminUserModel: Admin,
+  },
+);
