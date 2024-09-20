@@ -1,4 +1,4 @@
-import type { Document, FilterQuery } from 'mongoose';
+import type { Document, FilterQuery, Model } from 'mongoose';
 import type { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import {
@@ -7,7 +7,7 @@ import {
   ChangeStreamReplaceDocument,
   ChangeStreamUpdateDocument,
 } from 'mongodb';
-import { RealtimeQuery } from './dto/realtime.query';
+import { RealtimeSocketOptions } from './dto/realtime.query';
 
 export type Return<F> = F extends () => Promise<infer R> ? R : never;
 
@@ -17,7 +17,7 @@ export interface ListenMap {
 }
 
 export interface EmitMap {
-  data: (data: any[]) => void;
+  data: (data: any[] | any) => void;
   update: (data: { _id: string; data: any }) => void;
   remove: (data: { _id: string }) => void;
   add: (data: { _id: string; data: any }) => void;
@@ -25,8 +25,8 @@ export interface EmitMap {
 }
 
 export interface SocketData {
-  query: RealtimeQuery;
-  discriminatorMapping?: DiscriminatorMapping;
+  options: RealtimeSocketOptions;
+  model: Model<any>;
 }
 
 export interface DiscriminatorMapping {
@@ -44,7 +44,7 @@ export type RealtimeMongoEvent =
 
 export interface RealtimeMongoSession {
   client: DbSocket;
-  query?: FilterQuery<any>;
+  filter?: FilterQuery<any>;
   document_id?: string;
   document_ids: Set<string>;
 }

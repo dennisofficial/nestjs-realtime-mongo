@@ -2,7 +2,6 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
-  SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
 import {
@@ -14,7 +13,7 @@ import {
   UseFilters,
   ValidationPipe,
 } from '@nestjs/common';
-import type { Connection, FilterQuery } from 'mongoose';
+import type { Connection, FilterQuery, Model } from 'mongoose';
 import type { Namespace } from 'socket.io';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -22,8 +21,8 @@ import { RealtimeFilter } from './realtime.filter';
 import { REALTIME_CONNECTION } from './realtime.constants';
 import { SessionService } from './services/session.service';
 import { RealtimeService } from './realtime.service';
-import type { DbSocket, ListenMap } from './realtime.types';
-import { RealtimeQuery } from './dto/realtime.query';
+import type { DbSocket, RealtimeMongoSession } from './realtime.types';
+import { RealtimeAuthDto } from './dto/realtime.query';
 import { GuardService } from './services/guard.service';
 
 @WebSocketGateway({ namespace: 'database' })
@@ -56,74 +55,80 @@ export class RealtimeGateway
         return;
       }
 
-      const query = plainToInstance(RealtimeQuery, client.handshake.query);
+      const authDto = plainToInstance(RealtimeAuthDto, client.handshake.auth);
 
       // Validate Query DTO
-      const validationErrors = await validate(query, {
+      const validationErrors = await validate(authDto, {
         whitelist: true,
       });
       if (validationErrors.length) {
-        const validation = new ValidationPipe({
-          whitelist: true,
-        });
+        const validation = new ValidationPipe();
         const factory = validation.createExceptionFactory();
         const error: any = factory(validationErrors);
         return next(error);
       }
 
-      client.data.query = query;
+      const { modelName } = authDto._realtime;
+      client.data.options = authDto._realtime;
+
+      const model = this.databaseService.getModel(modelName);
 
       // Validate Collection Name
-      const modelNames = this.mongoCon.modelNames();
-      if (!modelNames.includes(query.modelName)) {
-        const err = new BadRequestException(
-          `Unknown collection: ${query.modelName}`,
-        );
+      if (!model) {
+        const err = new BadRequestException(`Unknown collection: ${modelName}`);
         return next(err);
       }
+
+      client.data.model = model;
 
       return next();
     });
   }
 
-  handleConnection(client: DbSocket): any {
-    this.sessionService.create(client);
+  async handleConnection(client: DbSocket): Promise<void> {
+    const session = this.sessionService.create(client);
+
+    if (client.data.options.filter) {
+      await this.handleFilter(
+        client,
+        session,
+        client.data.model,
+        client.data.options.filter,
+      );
+    }
+    if (client.data.options._id) {
+      await this.handleDocument(
+        client,
+        client.data.model,
+        client.data.options._id,
+      );
+    }
   }
 
   handleDisconnect(client: DbSocket): any {
     this.sessionService.remove(client);
   }
 
-  @SubscribeMessage<keyof ListenMap>('query')
-  async onQuery(client: DbSocket, payload: FilterQuery<any>) {
-    let session;
-    let model;
-    try {
-      session = this.sessionService.findOrThrow(client);
-      model = this.databaseService.getModelOrThrow(client.data.query.modelName);
-    } catch (e) {
-      client.disconnect(true);
-      return;
-    }
+  private handleFilter = async (
+    client: DbSocket,
+    session: RealtimeMongoSession,
+    model: Model<any>,
+    filter: FilterQuery<any>,
+  ) => {
+    const result = await model.find(filter).exec();
 
-    const result = await model.find(payload).exec();
-
-    session.query = payload;
+    session.filter = filter;
     session.document_ids = new Set<string>(result.map(({ _id }) => `${_id}`));
 
     client.emit('data', result);
-  }
+  };
 
-  @SubscribeMessage<keyof ListenMap>('document')
-  async onDocument(client: DbSocket, { _id }: { _id: string }) {
-    const modelSession = this.databaseService.getModelSession(client);
-    if (!modelSession) return;
-    const [session, model] = modelSession;
-
+  private handleDocument = async (
+    client: DbSocket,
+    model: Model<any>,
+    _id: string,
+  ) => {
     const result = await model.findById(_id).exec();
-
-    session.document_id = _id;
-
     client.emit('data', result);
-  }
+  };
 }

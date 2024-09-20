@@ -8,7 +8,11 @@ import { REALTIME_CONNECTION, REALTIME_OPTIONS } from '../realtime.constants';
 import type { Connection, FilterQuery } from 'mongoose';
 import type { RealtimeMongoOptions } from '../realtime.options';
 import { SessionService } from './session.service';
-import type { DbSocket, RealtimeMongoEvent } from '../realtime.types';
+import type {
+  DbSocket,
+  DiscriminatorMapping,
+  RealtimeMongoEvent,
+} from '../realtime.types';
 import type { ChangeStreamDocument, ChangeStreamOptions } from 'mongodb';
 import { Query } from 'mingo';
 import { EventService } from './event.service';
@@ -81,12 +85,13 @@ export class StreamService implements OnApplicationShutdown {
   private handleWebsocketEmitter = (data: RealtimeMongoEvent) => {
     const sessions = this.sessionService.listAll();
 
-    sessions.forEach(({ client, document_ids, query, document_id }) => {
-      const collection = client.data.query.collection;
-      if (data.ns.coll !== collection) return;
+    sessions.forEach(({ client, document_ids, filter, document_id }) => {
+      const collectionName = client.data.model.collection.collectionName;
 
-      if (query) {
-        this.handleQueryUpdate(client, query, document_ids, data);
+      if (data.ns.coll !== collectionName) return;
+
+      if (filter) {
+        this.handleQueryUpdate(client, filter, document_ids, data);
       }
 
       if (document_id) {
@@ -102,10 +107,14 @@ export class StreamService implements OnApplicationShutdown {
     data: RealtimeMongoEvent,
   ) => {
     // Check if discriminator was provided
-    const discriminatorMapping = client.data.discriminatorMapping;
+    const model = client.data.model;
 
     // If discriminator is provided, modify the query to use it
-    if (discriminatorMapping) {
+    if (model.baseModelName) {
+      const discriminatorMapping: DiscriminatorMapping = (model.schema as any)
+        .discriminatorMapping;
+
+      // Check if user is already filtering by `discriminator key`
       if (discriminatorMapping.key in query) {
         if (query.$and && Array.isArray(query.$and)) {
           query.$and.push({

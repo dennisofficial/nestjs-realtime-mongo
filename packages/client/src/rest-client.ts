@@ -1,9 +1,10 @@
-import axios, { AxiosHeaders, AxiosInstance, isAxiosError } from 'axios';
+import axios, { AxiosInstance, isAxiosError } from 'axios';
 import {
   DataArrayDto,
   DataSingleDto,
   FilterDto,
   ObjectIdDto,
+  RealtimeClientOptions,
   UpdateDto,
   UpdateIdDto,
 } from './types';
@@ -17,38 +18,23 @@ import {
   ValidationError,
 } from './errors';
 
-export interface RealtimeRestClientOptions {
-  baseURL: string;
-  getIdToken?: () => Promise<string | undefined>;
-  authHeaderConverter?: (idToken: string | undefined) => AxiosHeaders;
-  headers?: AxiosHeaders;
-  withCredentials?: boolean;
-}
-
 export class RealtimeRestClient<
   ModelMap extends Record<string, any> = Record<string, any>,
 > {
   private axiosInstance: AxiosInstance;
 
-  constructor(options: RealtimeRestClientOptions) {
+  constructor(options: RealtimeClientOptions) {
     this.axiosInstance = axios.create({
       baseURL: options.baseURL,
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        ...options.headers,
       },
       withCredentials: options.withCredentials,
     });
 
     this.axiosInstance.interceptors.request.use(async (r) => {
-      const idToken = await options.getIdToken?.();
-      if (idToken) {
-        const additionalHeader = options.authHeaderConverter
-          ? options.authHeaderConverter(idToken)
-          : {};
-        r.headers = r.headers.concat(additionalHeader);
-      }
+      r.headers = r.headers.concat(options.headers);
       return r;
     });
 

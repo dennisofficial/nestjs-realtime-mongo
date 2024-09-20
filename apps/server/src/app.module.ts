@@ -1,30 +1,31 @@
-import { Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
-import { REALTIME_GUARD, RealtimeModule } from "@dl-tech/realtime-mongo-nestjs";
-import { BullModule } from "@nestjs/bullmq";
-import { DatabaseEventService } from "@/database-event.service";
-import { APP_GUARD } from "@nestjs/core";
-import { AppGuard } from "@/app.guard";
-import { UserModule } from "@/user/user.module";
-import { UserModel } from "@/user/user.model";
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { REALTIME_GUARD, RealtimeModule } from '@dl-tech/realtime-mongo-nestjs';
+import { BullModule } from '@nestjs/bullmq';
+import { DatabaseEventService } from '@/database-event.service';
+import { APP_GUARD } from '@nestjs/core';
+import { AppGuard } from '@/app.guard';
+import { UserModule } from '@/user/user.module';
+import { UserModel } from '@/user/user.model';
+import { AdminUserModel } from '@/user/admin-user.model';
 
 const mockUser = {
-  _id: "66e60f6d4fc5b32c2dabe232",
-  first_name: "Dennis",
-  last_name: "Lysenko",
+  _id: '66e60f6d4fc5b32c2dabe232',
+  first_name: 'Dennis',
+  last_name: 'Lysenko',
   age: 6,
 };
 
 @Module({
   imports: [
-    MongooseModule.forRoot("mongodb://localhost:27017", {
-      replicaSet: "rs0",
-      dbName: "testing",
+    MongooseModule.forRoot('mongodb://localhost:27017', {
+      replicaSet: 'rs0',
+      dbName: 'testing',
     }),
 
     BullModule.forRoot({
       connection: {
-        host: "localhost",
+        host: 'localhost',
         port: 6379,
       },
     }),
@@ -36,12 +37,13 @@ const mockUser = {
         extractUserWS: () => mockUser,
       },
       postman: {
-        enabled: process.env.NODE_ENV === "development",
-        collectionName: "Testing Database",
+        enabled: process.env.NODE_ENV === 'development',
+        collectionName: 'Testing Database',
       },
       validation: {
         classValidators: {
-          [UserModel.name]: null,
+          [UserModel.name]: UserModel,
+          [AdminUserModel.name]: AdminUserModel,
         },
         validationOptions: {
           transform: true,

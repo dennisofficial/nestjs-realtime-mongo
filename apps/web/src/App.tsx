@@ -2,13 +2,41 @@ import { useEffect, useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
-import { databaseRest } from './api.ts';
+import { databaseRest, databaseSocket } from './api.ts';
 
 function App() {
   const [data, setData] = useState<any>();
 
   useEffect(() => {
-    databaseRest.findMany('UserModel', {filter: {}}).then(setData)
+    const { unsubscribe } = databaseSocket.onQueryUpdate(
+      'AdminUserModel',
+      {},
+      setData,
+      console.error,
+    );
+
+    void (async () => {
+      const results = await databaseRest.findMany('AdminUserModel', {
+        filter: {},
+      });
+      if (!results.length) {
+        const newUser = await databaseRest.insertOne('AdminUserModel', {
+          data: {
+            first_name: 'Admin',
+            last_name: 'User',
+            display_name: 'Admin Super God',
+            age: 12,
+            power_level: 100,
+          },
+        });
+
+        console.log(newUser);
+      }
+    })();
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (
@@ -22,14 +50,12 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
-      <pre style={{textAlign: 'left'}}>
-        {JSON.stringify(data, null, 2)}
-      </pre>
+      <pre style={{ textAlign: 'left' }}>{JSON.stringify(data, null, 2)}</pre>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

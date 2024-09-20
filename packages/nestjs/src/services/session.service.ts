@@ -6,10 +6,12 @@ export class SessionService {
   private sessions = new Map<string, RealtimeMongoSession>();
 
   create = (socket: DbSocket) => {
-    this.sessions.set(socket.id, {
+    const session: RealtimeMongoSession = {
       client: socket,
       document_ids: new Set(),
-    });
+    };
+    this.sessions.set(socket.id, session);
+    return session;
   };
 
   remove = (socket: DbSocket) => {

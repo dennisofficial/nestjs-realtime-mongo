@@ -1,9 +1,9 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocumentFromSchema } from "mongoose";
-import { User } from "@/user/user.types";
-import { IsNumber, IsString } from "class-validator";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocumentFromSchema } from 'mongoose';
+import { User } from '@/user/user.types';
+import { IsNumber, IsString } from 'class-validator';
 
-@Schema()
+@Schema({ discriminatorKey: 'role' })
 export class UserModel extends User {
   @Prop({ required: true })
   @IsString()
@@ -20,6 +20,9 @@ export class UserModel extends User {
   @Prop({ required: true })
   @IsNumber()
   age: number;
+
+  @Prop({ type: String })
+  user_role: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);

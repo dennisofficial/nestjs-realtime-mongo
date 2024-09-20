@@ -1,4 +1,5 @@
-import { RealtimeRestClient, RealtimeRestClientOptions } from './rest-client';
+import { RealtimeRestClient } from './rest-client';
+import { RealtimeSocketClient } from './socket-client';
 import {
   ApiError,
   ConflictError,
@@ -7,9 +8,11 @@ import {
   UnauthorizedError,
   ValidationError,
 } from './errors';
+import type { RealtimeClientOptions } from './types';
 
 export {
   RealtimeRestClient,
+  RealtimeSocketClient,
   ApiError,
   ConflictError,
   InternalServerError,
@@ -17,4 +20,4 @@ export {
   ValidationError,
   UnauthorizedError,
 };
-export type { RealtimeRestClientOptions };
+export type { RealtimeClientOptions };

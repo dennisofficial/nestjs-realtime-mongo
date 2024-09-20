@@ -1,4 +1,8 @@
-import { RealtimeRestClient } from '@dl-tech/realtime-mongo-client';
+import 'reflect-metadata';
+import {
+  RealtimeRestClient,
+  RealtimeSocketClient,
+} from '@dl-tech/realtime-mongo-client';
 
 class User {
   first_name!: string;
@@ -7,10 +11,19 @@ class User {
   age!: number;
 }
 
-type ModelMap = {
-  UserModel: User
+class Admin extends User {
+  power_level!: number;
 }
 
+type ModelMap = {
+  UserModel: User;
+  AdminUserModel: Admin;
+};
+
 export const databaseRest = new RealtimeRestClient<ModelMap>({
-  baseURL: 'http://localhost:4000'
-})
+  baseURL: 'http://localhost:4000',
+});
+
+export const databaseSocket = new RealtimeSocketClient<ModelMap>({
+  baseURL: 'http://localhost:4000',
+});
