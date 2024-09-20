@@ -157,7 +157,9 @@ export class RealtimeRestClient<
    */
   insertOne = async <ModelName extends keyof ModelMap>(
     modelName: ModelName,
-    payload: DataSingleDto<ModelMap[ModelName]>,
+    payload: DataSingleDto<
+      Omit<ModelMap[ModelName], keyof CreateModelExclusion>
+    >,
   ): Promise<ModelMap[ModelName]> => {
     const response = await this.axiosInstance.put(
       'database/insertOne',
@@ -192,7 +194,9 @@ export class RealtimeRestClient<
    */
   insertMany = async <ModelName extends keyof ModelMap>(
     modelName: ModelName,
-    payload: DataArrayDto<Exclude<ModelMap[ModelName], CreateModelExclusion>>,
+    payload: DataArrayDto<
+      Omit<ModelMap[ModelName], keyof CreateModelExclusion>
+    >,
   ): Promise<ModelMap[ModelName][]> => {
     const response = await this.axiosInstance.put(
       'database/insertMany',

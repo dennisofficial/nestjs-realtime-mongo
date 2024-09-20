@@ -8,9 +8,9 @@ function App() {
   const [data, setData] = useState<any>();
 
   useEffect(() => {
-    const { unsubscribe } = databaseSocket.onQuery(
+    const { unsubscribe } = databaseSocket.onDocument(
       'AdminUserModel',
-      {},
+      '66ecc25152fc1cb014edc3d5',
       setData,
       console.error,
     );

@@ -28,11 +28,13 @@ export type ModelMap = {
   AdminUserModel: Admin;
 };
 
-export const { databaseSocket, databaseRest } =
-  initializeRealtimeMongo<ModelMap>({
-    baseURL: 'http://localhost:4000',
-    deserializers: {
-      UserModel: (data: any): User => plainToInstance(User, data),
-      AdminUserModel: (data: any): Admin => plainToInstance(Admin, data),
-    },
-  });
+export const { databaseSocket, databaseRest } = initializeRealtimeMongo<
+  ModelMap,
+  BaseMongo
+>({
+  baseURL: 'http://localhost:4000',
+  deserializers: {
+    UserModel: (data: any): User => plainToInstance(User, data),
+    AdminUserModel: (data: any): Admin => plainToInstance(Admin, data),
+  },
+});
