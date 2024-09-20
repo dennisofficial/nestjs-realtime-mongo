@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
 import { initializeRealtimeMongo } from '@dl-tech/realtime-mongo-client';
 
 export class BaseMongo {
@@ -12,21 +12,27 @@ export class BaseMongo {
   updated_at!: Date;
 }
 
-class User extends BaseMongo {
+export class User extends BaseMongo {
   first_name!: string;
   last_name!: string;
   display_name!: string;
   age!: number;
 }
 
-class Admin extends User {
+export class Admin extends User {
   power_level!: number;
 }
 
-export const { databaseSocket, databaseRest } = initializeRealtimeMongo(
-  { baseURL: 'http://localhost:4000' },
-  {
-    UserModel: User,
-    AdminUserModel: Admin,
-  },
-);
+export type ModelMap = {
+  UserModel: User;
+  AdminUserModel: Admin;
+};
+
+export const { databaseSocket, databaseRest } =
+  initializeRealtimeMongo<ModelMap>({
+    baseURL: 'http://localhost:4000',
+    deserializers: {
+      UserModel: (data: any): User => plainToInstance(User, data),
+      AdminUserModel: (data: any): Admin => plainToInstance(Admin, data),
+    },
+  });

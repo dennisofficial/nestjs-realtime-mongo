@@ -1,10 +1,6 @@
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import { AxiosHeaders } from 'axios';
 
-export interface Type<T = any> extends Function {
-  new (...args: any[]): T;
-}
-
 export interface ObjectIdDto {
   _id: string;
 }
@@ -31,6 +27,10 @@ export interface UpdateDto<T extends Record<string, any>> {
   update: UpdateQuery<T>;
 }
 
+type Deserializers<T extends Record<string, any>> = {
+  [K in keyof T]: (data: any) => T[K];
+};
+
 export interface RealtimeClientOptions<
   ModelMap extends Record<string, any> = Record<string, any>,
 > {
@@ -41,6 +41,6 @@ export interface RealtimeClientOptions<
   wsAuth?: () => Promise<Record<string, any>> | Record<string, any>;
   // Turn on cookies for the rest client, and socket client.
   withCredentials?: boolean;
-  // `class-validator` classes to be used to deserialize the data coming in
-  deserializers?: Record<keyof ModelMap, Type>;
+  // functions to be used to deserialize the data coming in
+  deserializers?: Deserializers<ModelMap>;
 }

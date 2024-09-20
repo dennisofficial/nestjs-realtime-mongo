@@ -8,7 +8,7 @@ function App() {
   const [data, setData] = useState<any>();
 
   useEffect(() => {
-    const { unsubscribe } = databaseSocket.onQueryUpdate(
+    const { unsubscribe } = databaseSocket.onQuery(
       'AdminUserModel',
       {},
       setData,
@@ -19,6 +19,7 @@ function App() {
       const results = await databaseRest.findMany('AdminUserModel', {
         filter: {},
       });
+
       if (!results.length) {
         const newUser = await databaseRest.insertOne('AdminUserModel', {
           data: {

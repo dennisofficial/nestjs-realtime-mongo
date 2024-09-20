@@ -8,23 +8,16 @@ import {
   UnauthorizedError,
   ValidationError,
 } from './errors';
-import type { RealtimeClientOptions, Type } from './types';
+import type { RealtimeClientOptions } from './types';
 
 export const initializeRealtimeMongo = <
-  ModelMap extends Record<string, Type> = Record<string, Type>,
+  ModelMap extends Record<string, any> = Record<string, any>,
 >(
-  options: Omit<RealtimeClientOptions<ModelMap>, 'deserializers'>,
-  deserializers?: ModelMap,
+  options: RealtimeClientOptions<ModelMap>,
 ) => {
-  const databaseRest = new RealtimeRestClient<ModelMap>({
-    ...options,
-    deserializers,
-  });
+  const databaseRest = new RealtimeRestClient<ModelMap>(options);
+  const databaseSocket = new RealtimeSocketClient<ModelMap>(options);
 
-  const databaseSocket = new RealtimeSocketClient<ModelMap>({
-    ...options,
-    deserializers,
-  });
   return { databaseRest, databaseSocket };
 };
 

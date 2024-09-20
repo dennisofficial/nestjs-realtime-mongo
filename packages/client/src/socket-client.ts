@@ -18,7 +18,6 @@ interface ListenMap<R extends Record<string, any>, D extends R | R[]> {
 
 interface RealtimeResult {
   unsubscribe: () => void;
-  refresh: () => Promise<void>;
 }
 
 export class RealtimeSocketClient<
@@ -26,15 +25,12 @@ export class RealtimeSocketClient<
 > {
   constructor(private readonly options: RealtimeClientOptions<ModelMap>) {}
 
-  onQueryUpdate = <
-    ModelName extends keyof ModelMap,
-    R extends ModelMap[ModelName],
-  >(
+  onQuery = <ModelName extends keyof ModelMap, R extends ModelMap[ModelName]>(
     modelName: ModelName,
     filter: Filter<R>,
     onChange: (data: R[]) => any,
     onError?: (err: any) => any,
-  ) => {
+  ): RealtimeResult => {
     // Incase unsubscribe is called before a connection is made, this will
     // make the socket disconnect onConnection
     let shouldDisconnect = false;
@@ -98,6 +94,84 @@ export class RealtimeSocketClient<
     socket.on('add', (data) => {
       cache.set(data._id, data.data);
       onChange(Array.from(cache.values()));
+    });
+
+    return {
+      unsubscribe: () => {
+        shouldDisconnect = true;
+        if (socket.connected) {
+          socket.disconnect();
+        }
+      },
+    };
+  };
+
+  onDocument = <
+    ModelName extends keyof ModelMap,
+    R extends ModelMap[ModelName],
+  >(
+    modelName: ModelName,
+    _id: string,
+    onChange: (data: R | null) => any,
+    onError?: (err: any) => any,
+  ): RealtimeResult => {
+    // Incase unsubscribe is called before a connection is made, this will
+    // make the socket disconnect onConnection
+    let shouldDisconnect = false;
+
+    const url = new URL('database', this.options.baseURL);
+
+    const socket: Socket<ListenMap<R, R>, EmitMap<R>> = io(url.href, {
+      transports: ['websocket'],
+      extraHeaders: this.options.headers,
+      reconnection: true,
+      auth: async (cb) => {
+        const baseObject = { modelName, _id };
+
+        try {
+          const payload = await this.options.wsAuth?.();
+          cb({
+            ...payload,
+            _realtime: baseObject,
+          });
+        } catch (error) {
+          console.error('[RealtimeSocketClient] wsAuth Failed:', error);
+          cb(baseObject);
+        }
+      },
+    });
+
+    socket.on('connect', async () => {
+      if (shouldDisconnect) {
+        socket.disconnect();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('[RealtimeSocketClient] Connection Error:', error);
+      onError?.(error);
+    });
+
+    socket.on('exception', (err) => {
+      console.error('[RealtimeSocketClient] Server Exception:', err);
+      onError?.(err);
+    });
+
+    socket.on('data', (data) => {
+      onChange(data);
+    });
+
+    socket.on('remove', () => {
+      onChange(null);
+      socket.disconnect();
+    });
+
+    socket.on('update', (data) => {
+      onChange(data.data);
+    });
+
+    socket.on('add', (data) => {
+      onChange(data.data);
     });
 
     return {
