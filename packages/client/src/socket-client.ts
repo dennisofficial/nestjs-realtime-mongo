@@ -25,6 +25,19 @@ export class RealtimeSocketClient<
 > {
   constructor(private readonly options: RealtimeClientOptions<ModelMap>) {}
 
+  private deserialize = <ModelName extends keyof ModelMap>(
+    modelName: ModelName,
+    data: ModelMap[ModelName],
+  ): ModelMap[ModelName] => {
+    const deserializer = this.options.deserializers?.[modelName];
+
+    if (deserializer) {
+      return deserializer(data);
+    }
+
+    return data;
+  };
+
   private _subscribe = <
     ModelName extends keyof ModelMap,
     R extends ModelMap[ModelName],
@@ -79,7 +92,7 @@ export class RealtimeSocketClient<
     if (options?.isDocument) {
       // Handle document subscription
       socket.on('data', (data) => {
-        onChange(data as D);
+        onChange(this.deserialize(modelName, data as R));
       });
 
       socket.on('remove', () => {
@@ -87,11 +100,11 @@ export class RealtimeSocketClient<
       });
 
       socket.on('update', (data) => {
-        onChange(data.data as D);
+        onChange(this.deserialize(modelName, data.data as R));
       });
 
       socket.on('add', (data) => {
-        onChange(data.data as D);
+        onChange(this.deserialize(modelName, data.data as R));
       });
     } else {
       // Handle query subscription
@@ -100,7 +113,9 @@ export class RealtimeSocketClient<
       socket.on('data', (data) => {
         if (data && Array.isArray(data)) {
           cache.clear();
-          data.forEach((item: R) => cache.set(item._id, item));
+          data.forEach((item: R) =>
+            cache.set(item._id, this.deserialize(modelName, item)),
+          );
           onChange(Array.from(cache.values()) as D);
         }
       });
@@ -111,12 +126,12 @@ export class RealtimeSocketClient<
       });
 
       socket.on('update', (data) => {
-        cache.set(data._id, data.data);
+        cache.set(data._id, this.deserialize(modelName, data.data));
         onChange(Array.from(cache.values()) as D);
       });
 
       socket.on('add', (data) => {
-        cache.set(data._id, data.data);
+        cache.set(data._id, this.deserialize(modelName, data.data));
         onChange(Array.from(cache.values()) as D);
       });
     }
