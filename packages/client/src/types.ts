@@ -31,16 +31,92 @@ type Deserializers<T extends Record<string, any>> = {
   [K in keyof T]: (data: any) => T[K];
 };
 
+/**
+ * Configuration options for the Realtime Client.
+ *
+ * @template ModelMap - A mapping of model names to their respective data types.
+ */
 export interface RealtimeClientOptions<
   ModelMap extends Record<string, any> = Record<string, any>,
 > {
+  /**
+   * The base URL of the API server.
+   * This is the root URL where your API is hosted.
+   *
+   * @example 'https://api.example.com'
+   */
   baseURL: string;
-  // A Header Factory function that will run on every request made. This is where you should return your auth headers.
-  headers?: AxiosHeaders;
-  // Websocket Auth Payload, this will be sent on connectiong to backend via websocket.
+
+  /**
+   * Custom headers to include with every HTTP request made by the client.
+   * This should not be used for authentication headers.
+   * Use this to set any static headers required by your API.
+   *
+   * @example
+   * {
+   *   'Content-Type': 'application/json',
+   *   'X-Custom-Header': 'custom-value',
+   * }
+   */
+  headers?: Record<string, string> | AxiosHeaders;
+
+  /**
+   * A function that returns an authentication payload for WebSocket connections.
+   * This payload will be sent during the WebSocket handshake to authenticate the client.
+   *
+   * The function can return the payload directly or return a promise that resolves to the payload.
+   *
+   * @returns A promise that resolves to an object containing authentication data, or the object itself.
+   *
+   * @example
+   * // Asynchronous function returning a promise
+   * async () => {
+   *   const token = await fetchWebSocketToken();
+   *   return { token };
+   * }
+   */
   wsAuth?: () => Promise<Record<string, any>> | Record<string, any>;
-  // Turn on cookies for the rest client, and socket client.
+
+  /**
+   * A function that returns authentication data for REST API requests.
+   * This function is called before each REST API request to retrieve fresh authentication data.
+   *
+   * The function can return the authentication data directly or return a promise that resolves to the data.
+   *
+   * @returns A promise that resolves to an object containing authentication data (e.g., headers), or the object itself.
+   *
+   * @example
+   * // Asynchronous function returning a promise
+   * async () => {
+   *   const token = await fetchRestApiToken();
+   *   return { 'Authorization': `Bearer ${token}` };
+   * }
+   */
+  restAuth?: () => Promise<Record<string, string>> | Record<string, string>;
+
+  /**
+   * Indicates whether cross-site Access-Control requests should be made using credentials such as cookies, authorization headers, or TLS client certificates.
+   *
+   * Set this to `true` if your API requires credentials like cookies or you need to make authenticated cross-origin requests.
+   *
+   * @default false
+   *
+   * @example
+   * true
+   */
   withCredentials?: boolean;
-  // functions to be used to deserialize the data coming in
+
+  /**
+   * An object containing functions to deserialize data received from the server.
+   * These functions can be used to transform raw data into instances of classes or perform custom data transformations.
+   *
+   * Each key should correspond to a model name, and the value is a function that accepts raw data and returns the deserialized object.
+   *
+   * @example
+   * {
+   *   User: (data) => new UserModel(data),
+   *   Post: (data) => new PostModel(data),
+   * }
+   */
   deserializers?: Deserializers<ModelMap>;
 }

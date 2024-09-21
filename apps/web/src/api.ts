@@ -33,6 +33,12 @@ export const { databaseSocket, databaseRest } = initializeRealtimeMongo<
   BaseMongo
 >({
   baseURL: 'http://localhost:4000',
+  wsAuth: () => {
+    // This function is for the Auth Object in socket.io. Use this to authenticate your users.
+    return {
+      id_token: 'eyzasdfasf...',
+    };
+  },
   deserializers: {
     UserModel: (data: any): User => plainToInstance(User, data),
     AdminUserModel: (data: any): Admin => plainToInstance(Admin, data),

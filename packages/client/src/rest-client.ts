@@ -33,12 +33,14 @@ export class RealtimeRestClient<
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...this.options.headers,
       },
       withCredentials: options.withCredentials,
     });
 
     this.axiosInstance.interceptors.request.use(async (r) => {
-      r.headers = r.headers.concat(options.headers);
+      const restAuth = await this.options.restAuth?.();
+      r.headers = r.headers.concat(restAuth);
       return r;
     });
 
