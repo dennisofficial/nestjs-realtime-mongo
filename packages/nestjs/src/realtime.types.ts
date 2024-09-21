@@ -20,7 +20,7 @@ export interface EmitMap {
   data: (data: Record<string, any>[] | Record<string, any>) => void;
   update: (data: { _id: string; data: Record<string, any> }) => void;
   remove: (data: { _id: string }) => void;
-  add: (data: { _id: string; data: any }) => void;
+  add: (data: { _id: string; data: Record<string, any> }) => void;
   exception: (error: any) => void;
 }
 
