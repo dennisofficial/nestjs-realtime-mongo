@@ -17,8 +17,8 @@ export interface ListenMap {
 }
 
 export interface EmitMap {
-  data: (data: any[] | any) => void;
-  update: (data: { _id: string; data: any }) => void;
+  data: (data: Record<string, any>[] | Record<string, any>) => void;
+  update: (data: { _id: string; data: Record<string, any> }) => void;
   remove: (data: { _id: string }) => void;
   add: (data: { _id: string; data: any }) => void;
   exception: (error: any) => void;
@@ -26,7 +26,7 @@ export interface EmitMap {
 
 export interface SocketData {
   options: RealtimeSocketOptions;
-  model: Model<any>;
+  model: Model<Record<string, any>>;
 }
 
 export interface DiscriminatorMapping {
