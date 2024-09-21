@@ -1,11 +1,11 @@
-name: Publish NestJS Package
+name: Publish Client Package
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'packages/nestjs/**'
+      - 'packages/client/**'
 
 jobs:
   publish:
@@ -34,7 +34,7 @@ jobs:
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Publish package
-        working-directory: packages/nestjs
+        working-directory: packages/client
         run: pnpm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
