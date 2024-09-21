@@ -80,6 +80,9 @@ export class RealtimeSocketClient<
     });
 
     socket.on('connect_error', (error) => {
+      // This will supress reconnection errors
+      if (socket.active) return;
+
       console.error('[RealtimeSocketClient] Connection Error:', error);
       onError?.(error);
     });
