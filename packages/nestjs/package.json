@@ -1,6 +1,6 @@
 {
   "name": "@dl-tech/realtime-mongo-nestjs",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "NestJS Module to enable Realtime Database for MongoDB (@nestjs/mongoose)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -59,16 +59,16 @@ export abstract class RealtimeRuleGuard<
 > {
   abstract canCreate(
     user: U | null,
-  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  ): FilterQuery<D> | Promise<FilterQuery<D> | boolean> | boolean;
   abstract canRead(
     user: U | null,
-  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  ): FilterQuery<D> | Promise<FilterQuery<D> | boolean> | boolean;
   abstract canUpdate(
     user: U | null,
-  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  ): FilterQuery<D> | Promise<FilterQuery<D> | boolean> | boolean;
   abstract canDelete(
     user: U | null,
-  ): FilterQuery<D> | Promise<FilterQuery<D>> | boolean | Promise<boolean>;
+  ): FilterQuery<D> | Promise<FilterQuery<D> | boolean> | boolean;
 }
 
 export interface CanRealtimeActivate {
