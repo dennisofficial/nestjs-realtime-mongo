@@ -1,6 +1,6 @@
 {
   "name": "@dl-tech/realtime-mongo-client",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "Realtime Database for MongoDB Client (@nestjs/mongoose)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
