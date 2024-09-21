@@ -44,7 +44,7 @@ export type RealtimeMongoEvent =
 
 export interface RealtimeMongoSession {
   client: DbSocket;
-  filter?: FilterQuery<any>;
+  filter?: FilterQuery<Record<string, any>>;
   document_id?: string;
   document_ids: Set<string>;
 }
