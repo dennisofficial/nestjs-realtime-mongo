@@ -34,17 +34,13 @@ export class GuardService implements OnModuleInit {
   }
 
   async invokeGuards(socket: Socket) {
-    let canActivate = false;
-    const results = this._handlers.map((handler) =>
-      handler.canRealtimeActivate(socket),
+    let canActivate = true;
+    const results = await Promise.all(
+      this._handlers.map((handler) => handler.canRealtimeActivate(socket)),
     );
 
     for (const result of results) {
-      if (result instanceof Promise) {
-        if (await result) canActivate = true;
-      } else {
-        if (result) canActivate = true;
-      }
+      if (!result) canActivate = false;
     }
 
     return canActivate;
