@@ -6,8 +6,6 @@ Utilizing WebSockets from `socket.io` for client connections, and for regular RE
 ## Installation
 ```shell
 npm i @dl-tech/realtime-mongo-client
-yarn i @dl-tech/realtime-mongo-client
-pnpm i @dl-tech/realtime-mongo-client
 ```
 
 ## Usage

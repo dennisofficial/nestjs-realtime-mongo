@@ -14,16 +14,12 @@ additional NestJS packages.
 See [official docs](https://docs.nestjs.com/)
 ```shell
 npm i @nestjs/core @nestjs/common rxjs reflect-metadata
-yarn i @nestjs/core @nestjs/common rxjs reflect-metadata
-pnpm i @nestjs/core @nestjs/common rxjs reflect-metadata
 ```
 
 #### Install NestJS Mongoose
 See [official docs](https://docs.nestjs.com/techniques/mongodb)
 ```shell
 npm i @nestjs/mongoose mongoose
-yarn i @nestjs/mongoose mongoose
-pnpm i @nestjs/mongoose mongoose
 ```
 
 #### Install NestJS WebSockets (socket.io)
@@ -32,15 +28,11 @@ This is needed for clients to connect with WebSockets using NestJS.
 See [official docs](https://docs.nestjs.com/websockets/gateways)
 ```shell
 npm i @nestjs/websockets @nestjs/platform-socket.io
-yarn i @nestjs/websockets @nestjs/platform-socket.io
-pnpm i @nestjs/websockets @nestjs/platform-socket.io
 ```
 
 #### Install RealtimeMongoDB
 ```shell
 npm i @dl-tech/realtime-mongo-nestjs
-yarn i @dl-tech/realtime-mongo-nestjs
-pnpm i @dl-tech/realtime-mongo-nestjs
 ```
 
 Ensure `enableShutdownHooks()` is enabled in `main.ts`. This ensures that the `Change Stream` connection can be gracefully closed.

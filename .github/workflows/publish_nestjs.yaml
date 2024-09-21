@@ -27,10 +27,12 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Install dependencies
+        working-directory: packages/nestjs
         run: pnpm install
         shell: bash
 
       - name: Build Package
+        working-directory: packages/nestjs
         run: pnpm build
         shell: bash
 
