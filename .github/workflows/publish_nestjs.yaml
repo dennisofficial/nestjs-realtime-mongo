@@ -13,4 +13,4 @@ jobs:
     with:
       target: nestjs
     secrets:
-      DOTENV_KEY: ${{ secrets.NPM_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
