@@ -47,9 +47,10 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})
           git add package.json
           git commit -m "chore(release): update version to $VERSION"
-          git push
+          git push origin HEAD:$BRANCH_NAME
         shell: bash
 
       - name: Install dependencies
