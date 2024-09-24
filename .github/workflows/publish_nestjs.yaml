@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/_publish.yaml
     with:
       target: nestjs
+    secrets:
+      DOTENV_KEY: ${{ secrets.NPM_TOKEN }}

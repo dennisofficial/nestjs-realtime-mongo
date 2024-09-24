@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/_publish.yaml
     with:
       target: client
+    secrets:
+      DOTENV_KEY: ${{ secrets.NPM_TOKEN }}
