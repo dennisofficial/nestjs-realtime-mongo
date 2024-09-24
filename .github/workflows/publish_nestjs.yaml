@@ -1,14 +1,13 @@
 name: Publish NestJS Package
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/nestjs/**'
+  release:
+    types:
+      - published
 
 jobs:
   publish:
+    if: startsWith(github.event.release.tag_name, 'client')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
