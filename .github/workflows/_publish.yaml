@@ -47,10 +47,18 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Extract branch name from GITHUB_REF
           BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})
+
+          # Add, commit, and push changes to the branch
           git add package.json
           git commit -m "chore(release): update version to $VERSION"
-          git push origin HEAD:$BRANCH_NAME
+          git push origin HEAD:$BRANCH_NAME --no-tags
+
+          # Force update the tag to include the new commit
+          git tag -f "${{ github.event.release.tag_name }}"
+          git push origin --force --tags
         shell: bash
 
       - name: Install dependencies
