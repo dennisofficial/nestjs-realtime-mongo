@@ -8,4 +8,4 @@ on:
 jobs:
   publish:
     name: NestJS
-    uses: ./.github/workflows/_publish.yml
+    uses: ./.github/workflows/_publish.yaml
