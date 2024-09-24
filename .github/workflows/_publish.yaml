@@ -47,7 +47,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/${{ inputs.target }}/package.json
+          git add package.json
           git commit -m "chore(release): update version to $VERSION"
           git push
         shell: bash
