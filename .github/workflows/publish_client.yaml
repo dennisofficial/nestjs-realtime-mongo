@@ -7,39 +7,5 @@ on:
 
 jobs:
   publish:
-    if: startsWith(github.event.release.tag_name, 'client')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: '9'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-
-      - name: Install dependencies
-        working-directory: packages/client
-        run: pnpm install
-        shell: bash
-
-      - name: Build Package
-        working-directory: packages/client
-        run: pnpm build
-        shell: bash
-
-      - name: Set up NPM authentication
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Publish package
-        working-directory: packages/client
-        run: pnpm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    name: Client
+    uses: ./.github/workflows/_publish.yml

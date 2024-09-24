@@ -1,0 +1,69 @@
+name: Publish Package
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: 'Package Target'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    if: startsWith(github.event.release.tag_name, inputs.target)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/${{ inputs.target }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/${{ inputs.target }}@}" >> $GITHUB_ENV
+
+      - name: Confirm version
+        run: echo "Version is $VERSION"
+
+      - name: Update version in package.json
+        run: |
+          jq --arg version "$VERSION" '.version = $version' package.json > temp.json && mv temp.json package.json
+        shell: bash
+
+      - name: Commit and push version change
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/${{ inputs.target }}/package.json
+          git commit -m "chore(release): update version to $VERSION"
+          git push
+        shell: bash
+
+      - name: Install dependencies
+        run: pnpm install
+        shell: bash
+
+      - name: Build Package
+        run: pnpm build
+        shell: bash
+
+      - name: Set up NPM authentication
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Publish package
+        run: pnpm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
