@@ -1,11 +1,11 @@
 import {
   RealtimeRule,
   RealtimeRuleGuard,
-} from "@dl-tech/realtime-mongo-nestjs";
-import { UserDocument, UserModel } from "@/user/user.model";
-import { User } from "@/user/user.types";
-import { FilterQuery } from "mongoose";
-import { ObjectId } from "mongodb";
+} from '@dl-tech/realtime-mongo-nestjs';
+import { UserDocument, UserModel } from '@/user/user.model';
+import { User } from '@/user/user.types';
+import { FilterQuery } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 @RealtimeRule(UserModel)
 export class UserRule extends RealtimeRuleGuard<User, UserDocument> {

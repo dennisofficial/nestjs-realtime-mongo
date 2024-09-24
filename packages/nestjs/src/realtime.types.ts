@@ -7,7 +7,6 @@ import {
   ChangeStreamReplaceDocument,
   ChangeStreamUpdateDocument,
 } from 'mongodb';
-import { RealtimeSocketOptions } from './dto/realtime.query';
 
 export type Return<F> = F extends () => Promise<infer R> ? R : never;
 
@@ -18,15 +17,16 @@ export interface ListenMap {
 
 export interface EmitMap {
   data: (data: Record<string, any>[] | Record<string, any>) => void;
-  update: (data: { _id: string; data: Record<string, any> }) => void;
+  update: (data: { _id: string; data?: Record<string, any> }) => void;
   remove: (data: { _id: string }) => void;
-  add: (data: { _id: string; data: Record<string, any> }) => void;
+  add: (data: { _id: string; data?: Record<string, any> }) => void;
   exception: (error: any) => void;
 }
 
 export interface SocketData {
-  options: RealtimeSocketOptions;
   model: Model<Record<string, any>>;
+  filter: FilterQuery<Record<string, any>>;
+  isDocument: boolean;
 }
 
 export interface DiscriminatorMapping {
@@ -44,8 +44,6 @@ export type RealtimeMongoEvent =
 
 export interface RealtimeMongoSession {
   client: DbSocket;
-  filter?: FilterQuery<Record<string, any>>;
-  document_id?: string;
   document_ids: Set<string>;
 }
 

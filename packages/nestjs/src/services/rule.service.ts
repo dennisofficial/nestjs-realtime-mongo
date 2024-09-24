@@ -42,7 +42,7 @@ export class RuleService implements OnModuleInit {
     modelName: string,
     user: any | null,
     operation: keyof RealtimeRuleGuard<any, any>,
-  ): Promise<FilterQuery<any> | boolean> => {
+  ): Promise<FilterQuery<Record<string, any>> | boolean> => {
     const guard = this._rules.get(modelName);
 
     if (!guard) {

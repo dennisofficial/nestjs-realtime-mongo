@@ -13,17 +13,17 @@ import {
   UseFilters,
   ValidationPipe,
 } from '@nestjs/common';
-import type { Connection, FilterQuery, Model } from 'mongoose';
 import type { Namespace } from 'socket.io';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { RealtimeFilter } from './realtime.filter';
-import { REALTIME_CONNECTION } from './realtime.constants';
 import { SessionService } from './services/session.service';
 import { RealtimeService } from './realtime.service';
-import type { DbSocket, RealtimeMongoSession } from './realtime.types';
+import type { DbSocket } from './realtime.types';
 import { RealtimeAuthDto } from './dto/realtime.query';
 import { GuardService } from './services/guard.service';
+import { REALTIME_OPTIONS } from './realtime.constants';
+import type { RealtimeMongoOptions } from './realtime.options';
 
 @WebSocketGateway({ namespace: 'database' })
 @UseFilters(RealtimeFilter)
@@ -31,7 +31,8 @@ export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   constructor(
-    @Inject(REALTIME_CONNECTION) private readonly mongoCon: Connection,
+    @Inject(REALTIME_OPTIONS) private readonly options: RealtimeMongoOptions,
+    private readonly realtimeService: RealtimeService,
     private readonly sessionService: SessionService,
     private readonly databaseService: RealtimeService,
     private readonly guardService: GuardService,
@@ -69,7 +70,10 @@ export class RealtimeGateway
       }
 
       const { modelName } = authDto._realtime;
-      client.data.options = authDto._realtime;
+      let filter = authDto._realtime.filter ?? {};
+      if (authDto._realtime._id) {
+        filter._id = authDto._realtime._id;
+      }
 
       const model = this.databaseService.getModel(modelName);
 
@@ -79,7 +83,25 @@ export class RealtimeGateway
         return next(err);
       }
 
-      client.data.model = model;
+      // Validate rule guards
+      try {
+        const user = this.getUser(client);
+        const guardFilter = await this.realtimeService.verifyAccess(
+          user,
+          model,
+          'canRead',
+        );
+
+        if (guardFilter) {
+          filter = this.realtimeService.mergeFilters(filter, guardFilter);
+        }
+      } catch (e) {
+        return next(e);
+      }
+
+      console.log(filter);
+
+      client.data = { isDocument: !!authDto._realtime._id, model, filter };
 
       return next();
     });
@@ -87,21 +109,17 @@ export class RealtimeGateway
 
   async handleConnection(client: DbSocket): Promise<void> {
     const session = this.sessionService.create(client);
+    const model = client.data.model;
+    const filter = client.data.filter;
 
-    if (client.data.options.filter) {
-      await this.handleFilter(
-        client,
-        session,
-        client.data.model,
-        client.data.options.filter,
-      );
-    }
-    if (client.data.options._id) {
-      await this.handleDocument(
-        client,
-        client.data.model,
-        client.data.options._id,
-      );
+    const result = await model.find(filter).exec();
+
+    session.document_ids = new Set<string>(result.map(({ _id }) => `${_id}`));
+
+    if (client.data.isDocument) {
+      client.emit('data', result[0] ?? null);
+    } else {
+      client.emit('data', result);
     }
   }
 
@@ -109,26 +127,14 @@ export class RealtimeGateway
     this.sessionService.remove(client);
   }
 
-  private handleFilter = async (
-    client: DbSocket,
-    session: RealtimeMongoSession,
-    model: Model<any>,
-    filter: FilterQuery<any>,
-  ) => {
-    const result = await model.find(filter).exec();
-
-    session.filter = filter;
-    session.document_ids = new Set<string>(result.map(({ _id }) => `${_id}`));
-
-    client.emit('data', result);
-  };
-
-  private handleDocument = async (
-    client: DbSocket,
-    model: Model<any>,
-    _id: string,
-  ) => {
-    const result = await model.findById(_id).exec();
-    client.emit('data', result);
+  /**
+   * Extracts the user from the Socket using the access guard's extraction method.
+   *
+   * @param socket - The incoming client Socket.
+   *
+   * @returns The user object extracted from the socket or null if not available.
+   */
+  private getUser = (socket: DbSocket): Record<string, any> | null => {
+    return this.options.accessGuard?.extractUserWS?.(socket) ?? null;
   };
 }

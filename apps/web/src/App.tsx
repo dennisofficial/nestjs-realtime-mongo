@@ -2,26 +2,18 @@ import { useEffect, useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
-import { databaseRest, databaseSocket } from './api.ts';
+import { databaseSocket } from './api.ts';
 
 function App() {
   const [data, setData] = useState<any>();
 
   useEffect(() => {
     const { unsubscribe } = databaseSocket.onDocument(
-      'AdminUserModel',
+      'UserModel',
       '66ecc25152fc1cb014edc3d5',
       setData,
       console.error,
     );
-
-    void (async () => {
-      const results = await databaseRest.findMany('AdminUserModel', {
-        filter: {},
-      });
-
-      results.forEach(({ created_at }) => console.log(created_at));
-    })();
 
     return () => {
       unsubscribe();

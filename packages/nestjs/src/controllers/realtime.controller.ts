@@ -19,7 +19,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import mongoose, { Document, FilterQuery, Model } from 'mongoose';
+import mongoose, { FilterQuery, Model } from 'mongoose';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeQuery } from '../dto/realtime.query';
 import { RealtimeRuleGuard, Return } from '../realtime.types';
@@ -28,9 +28,7 @@ import {
   REALTIME_OPTIONS,
 } from '../realtime.constants';
 import type { RealtimeMongoOptions } from '../realtime.options';
-import { RuleService } from '../services/rule.service';
 import { Request } from 'express';
-import { Query as MongoQuery } from 'mingo';
 import { validate } from 'class-validator';
 import { DeleteResult, MongoError, UpdateResult } from 'mongodb';
 import { PostMan } from '../decorators/postman.decorator';
@@ -53,7 +51,7 @@ export class RealtimeController {
   constructor(
     @Inject(REALTIME_OPTIONS) private readonly options: RealtimeMongoOptions,
     private readonly databaseService: RealtimeService,
-    private readonly ruleService: RuleService,
+    private readonly realtimeService: RealtimeService,
   ) {}
 
   //  ██████╗██████╗ ███████╗ █████╗ ████████╗███████╗
@@ -79,7 +77,12 @@ export class RealtimeController {
 
     await this.validateOrThrow(model, 'full', data);
 
-    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
+    const user = this.getUser(req);
+    const guardFilter = await this.realtimeService.verifyAccess(
+      user,
+      model,
+      'canCreate',
+    );
 
     if (guardFilter && !guardFilter.test(data)) {
       throw new ForbiddenException('Forbidden Document Values');
@@ -104,7 +107,12 @@ export class RealtimeController {
 
     await this.validateOrThrow(model, 'full', data);
 
-    const guardFilter = await this.verifyAccess(req, model, 'canCreate');
+    const user = this.getUser(req);
+    const guardFilter = await this.realtimeService.verifyAccess(
+      user,
+      model,
+      'canCreate',
+    );
 
     if (guardFilter && !data.every((item) => guardFilter.test(item))) {
       throw new ForbiddenException('Forbidden Document Values');
@@ -447,10 +455,15 @@ export class RealtimeController {
     dbOperation: (model: Model<any>, filter: FilterQuery<any>) => Promise<T>,
   ): Promise<T> {
     const model = this.databaseService.getModelOrThrow(modelName);
-    const guardFilter = await this.verifyAccess(req, model, operation);
+    const user = this.getUser(req);
+    const guardFilter = await this.realtimeService.verifyAccess(
+      user,
+      model,
+      operation,
+    );
 
     if (guardFilter) {
-      this.mergeFilters(filter, guardFilter);
+      this.realtimeService.mergeFilters(filter, guardFilter);
     }
 
     return this.executeOrThrow(() => dbOperation(model, filter));
@@ -463,42 +476,8 @@ export class RealtimeController {
    *
    * @returns The user object extracted from the request or null if not available.
    */
-  private getUser = (req: Request) => {
+  private getUser = (req: Request): Record<string, any> | null => {
     return this.options.accessGuard?.extractUserRest?.(req) ?? null;
-  };
-
-  /**
-   * Verifies access permissions for the given operation on the model.
-   *
-   * @param req - The incoming HTTP request.
-   * @param model - The Mongoose model on which the operation is to be performed.
-   * @param operation - The access control operation to verify (e.g., 'canRead', 'canCreate').
-   *
-   * @returns A MongoQuery representing the guard's filter conditions or null if access is fully granted.
-   *
-   * @throws {ForbiddenException} - Thrown if access is explicitly denied by the guard.
-   */
-  private verifyAccess = async (
-    req: Request,
-    model: Model<Record<string, any>>,
-    operation: keyof RealtimeRuleGuard<Record<string, any>, Document>,
-  ): Promise<MongoQuery | null> => {
-    const user = this.getUser(req);
-    const guard = await this.ruleService.invokeRules(
-      model.modelName,
-      user,
-      operation,
-    );
-
-    if (typeof guard === 'boolean' && !guard) {
-      throw new ForbiddenException('Access denied by guard.');
-    }
-
-    if (typeof guard === 'object') {
-      return new MongoQuery(guard);
-    }
-
-    return null;
   };
 
   /**
@@ -565,27 +544,6 @@ export class RealtimeController {
       // If the error is not recognized, throw a generic Internal Server Error
       throw new InternalServerErrorException('An unexpected error occurred.');
     }
-  };
-
-  /**
-   * Merges the original filter query with the guard's filter conditions using a logical AND operation.
-   *
-   * @param originalFilter - The original MongoDB filter query.
-   * @param guardFilter - The MongoQuery object representing the guard's filter conditions.
-   *
-   * @returns The combined filter query with both the original and guard conditions.
-   */
-  private mergeFilters = (
-    originalFilter: FilterQuery<Record<string, any>>,
-    guardFilter: MongoQuery,
-  ): FilterQuery<Record<string, any>> => {
-    if (!originalFilter.$and) {
-      originalFilter.$and = [];
-    }
-
-    originalFilter.$and.push((guardFilter as any).condition);
-
-    return originalFilter;
   };
 
   private validateOrThrow = async (

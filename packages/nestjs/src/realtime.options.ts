@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io';
 import { ValidationPipeOptions } from '@nestjs/common/pipes/validation.pipe';
 
 export interface RealtimeMongoOptions<
-  User extends Record<string, any> | undefined = any,
+  User extends Record<string, any> | undefined = Record<string, any>,
 > {
   /**
    * The connection token used by `@nestjs/mongoose` to identify the database connection.

@@ -85,18 +85,11 @@ export class StreamService implements OnApplicationShutdown {
   private handleWebsocketEmitter = (data: RealtimeMongoEvent) => {
     const sessions = this.sessionService.listAll();
 
-    sessions.forEach(({ client, document_ids, filter, document_id }) => {
+    sessions.forEach(({ client, document_ids }) => {
       const collectionName = client.data.model.collection.collectionName;
 
       if (data.ns.coll !== collectionName) return;
-
-      if (filter) {
-        this.handleQueryUpdate(client, filter, document_ids, data);
-      }
-
-      if (document_id) {
-        this.handleSingleUpdate(client, document_id, data);
-      }
+      this.handleQueryUpdate(client, client.data.filter, document_ids, data);
     });
   };
 
@@ -174,29 +167,6 @@ export class StreamService implements OnApplicationShutdown {
       return;
     }
   };
-
-  private handleSingleUpdate(
-    client: DbSocket,
-    document_id: string,
-    data: RealtimeMongoEvent,
-  ) {
-    const _id = data.documentKey._id.toString();
-    if (document_id !== _id) return;
-
-    if (data.operationType === 'delete') {
-      return client.emit('remove', { _id });
-    }
-
-    // Handle update and replace operations
-    if (data.operationType === 'update' || data.operationType === 'replace') {
-      return client.emit('update', { _id, data: data.fullDocument });
-    }
-
-    // Handle insert operation
-    if (data.operationType === 'insert') {
-      return client.emit('add', { _id, data: data.fullDocument });
-    }
-  }
 
   private isNeededChangeDocument = (
     data: ChangeStreamDocument,
