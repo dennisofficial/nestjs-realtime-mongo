@@ -9,3 +9,5 @@ jobs:
   publish:
     name: NestJS
     uses: ./.github/workflows/_publish.yaml
+    with:
+      target: nestjs

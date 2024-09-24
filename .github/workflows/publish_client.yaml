@@ -9,3 +9,5 @@ jobs:
   publish:
     name: Client
     uses: ./.github/workflows/_publish.yaml
+    with:
+      target: client
