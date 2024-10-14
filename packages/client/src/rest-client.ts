@@ -17,6 +17,8 @@ import {
   UnauthorizedError,
   ValidationError,
 } from './errors';
+import * as devalue from 'devalue';
+import { devalueRevivers } from './encoder';
 
 export class RealtimeRestClient<
   ModelMap extends Record<string, any> = Record<string, any>,
@@ -31,9 +33,10 @@ export class RealtimeRestClient<
     this.axiosInstance = axios.create({
       baseURL: options.baseURL,
       headers: {
+        ...this.options.headers,
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        ...this.options.headers,
+        'X-Realtime-SDK': 'true',
       },
       withCredentials: options.withCredentials,
     });
@@ -45,7 +48,12 @@ export class RealtimeRestClient<
     });
 
     this.axiosInstance.interceptors.response.use(
-      async (r) => r,
+      async (r) => {
+        try {
+          r.data = devalue.parse(JSON.stringify(r.data), devalueRevivers);
+        } catch (e) {}
+        return r;
+      },
       (config) => {
         if (!isAxiosError(config) || !config.response) {
           return Promise.reject(config);
@@ -113,19 +121,6 @@ export class RealtimeRestClient<
     return true;
   };
 
-  private deserialize = <ModelName extends keyof ModelMap>(
-    modelName: ModelName,
-    data: ModelMap[ModelName],
-  ): ModelMap[ModelName] => {
-    const deserializer = this.options.deserializers?.[modelName];
-
-    if (deserializer) {
-      return deserializer(data);
-    }
-
-    return data;
-  };
-
   //  ██████╗██████╗ ███████╗ █████╗ ████████╗███████╗
   // ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔════╝
   // ██║     ██████╔╝█████╗  ███████║   ██║   █████╗
@@ -168,7 +163,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -205,7 +200,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   // ██████╗ ███████╗ █████╗ ██████╗
@@ -248,7 +243,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   /**
@@ -280,7 +275,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -316,7 +311,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   // ██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
@@ -358,7 +353,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -393,7 +388,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -431,7 +426,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   /**
@@ -469,7 +464,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   /**
@@ -509,7 +504,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -552,7 +547,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   // ██████╗ ███████╗██╗     ███████╗████████╗███████╗
@@ -591,7 +586,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -623,7 +618,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data);
+    return response.data;
   };
 
   /**
@@ -659,7 +654,7 @@ export class RealtimeRestClient<
       payload,
       { params: { modelName } },
     );
-    return this.deserialize(modelName, response.data) ?? null;
+    return response.data ?? null;
   };
 
   /**

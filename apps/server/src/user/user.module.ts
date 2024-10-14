@@ -1,8 +1,7 @@
-import { Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
-import { UserModel, UserSchema } from "@/user/user.model";
-import { UserRule } from "@/user/user.rule";
-import { AdminUserModel, AdminUserSchema } from "@/user/admin-user.model";
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { UserModel, UserSchema } from '@/user/user.model';
+import { AdminUserModel, AdminUserSchema } from '@/user/admin-user.model';
 
 @Module({
   imports: [
@@ -10,10 +9,10 @@ import { AdminUserModel, AdminUserSchema } from "@/user/admin-user.model";
       {
         name: UserModel.name,
         schema: UserSchema,
-        collection: "users",
+        collection: 'users',
         discriminators: [
           {
-            value: "Admin",
+            value: 'Admin',
             schema: AdminUserSchema,
             name: AdminUserModel.name,
           },
@@ -21,6 +20,6 @@ import { AdminUserModel, AdminUserSchema } from "@/user/admin-user.model";
       },
     ]),
   ],
-  providers: [UserRule],
+  // providers: [UserRule],
 })
 export class UserModule {}

@@ -1,6 +1,6 @@
 {
   "name": "@dl-tech/realtime-mongo-client",
-  "version": "1.0.3",
+  "version": "1.1",
   "description": "Realtime Database for MongoDB Client (@nestjs/mongoose)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -32,7 +32,11 @@
   },
   "homepage": "https://github.com/dennisofficial/nestjs-realtime-mongo#readme",
   "dependencies": {
+    "@dl-tech/realtime-mongo-encoder": "link:../encoder",
+    "@socket.io/component-emitter": "^3.1.2",
+    "@socket.io/devalue-parser": "^0.1.0",
     "axios": "^1.7.7",
+    "devalue": "^5.1.1",
     "mongodb": "^6.9.0",
     "mongoose": "^8.6.3",
     "socket.io-client": "^4.7.5"

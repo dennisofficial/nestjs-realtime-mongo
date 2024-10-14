@@ -1,4 +1,9 @@
-import { IsObject, IsString, ValidateIf } from 'class-validator';
+import {
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { FilterQuery } from 'mongoose';
 
@@ -12,16 +17,17 @@ export class RealtimeSocketOptions {
   modelName: string;
 
   @IsString()
-  @ValidateIf(({ filter }) => !filter)
+  @IsOptional()
   _id?: string;
 
   @IsObject({ each: false })
-  @ValidateIf(({ _id }) => !_id)
+  @IsOptional()
   filter?: FilterQuery<any>;
 }
 
 export class RealtimeAuthDto {
   @IsObject({ each: false })
+  @ValidateNested()
   @Type(() => RealtimeSocketOptions)
   _realtime: RealtimeSocketOptions;
 }

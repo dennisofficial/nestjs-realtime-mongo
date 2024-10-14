@@ -1,6 +1,6 @@
 {
   "name": "@dl-tech/realtime-mongo-nestjs",
-  "version": "1.0.5",
+  "version": "1.1",
   "description": "NestJS Module to enable Realtime Database for MongoDB (@nestjs/mongoose)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -32,9 +32,12 @@
   },
   "homepage": "https://github.com/dennisofficial/nestjs-realtime-mongo/tree/main/packages/nestjs#readme",
   "dependencies": {
+    "@dl-tech/realtime-mongo-encoder": "link:../encoder",
     "@nestjs/mapped-types": "^2.0.5",
+    "@socket.io/devalue-parser": "^0.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "devalue": "^5.1.1",
     "mingo": "^6.4.15"
   },
   "devDependencies": {

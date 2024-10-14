@@ -105,18 +105,4 @@ export interface RealtimeClientOptions<
    * true
    */
   withCredentials?: boolean;
-
-  /**
-   * An object containing functions to deserialize data received from the server.
-   * These functions can be used to transform raw data into instances of classes or perform custom data transformations.
-   *
-   * Each key should correspond to a model name, and the value is a function that accepts raw data and returns the deserialized object.
-   *
-   * @example
-   * {
-   *   User: (data) => new UserModel(data),
-   *   Post: (data) => new PostModel(data),
-   * }
-   */
-  deserializers?: Deserializers<ModelMap>;
 }

@@ -16,6 +16,7 @@ import {
   Req,
   ServiceUnavailableException,
   SetMetadata,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -43,10 +44,12 @@ import {
   UpdateDto,
   UpdateIdDto,
 } from '../dto/controller.dto';
+import { RealtimeEncoderInterceptor } from '../realtime-encoder.interceptor';
 
 @Controller('database')
 @SetMetadata(METADATA_REALTIME_CONTROLLER, true)
 @UsePipes(ValidationPipe)
+@UseInterceptors(RealtimeEncoderInterceptor)
 export class RealtimeController {
   constructor(
     @Inject(REALTIME_OPTIONS) private readonly options: RealtimeMongoOptions,
@@ -88,7 +91,8 @@ export class RealtimeController {
       throw new ForbiddenException('Forbidden Document Values');
     }
 
-    return this.executeOrThrow(() => model.create(data));
+    const result = await this.executeOrThrow(() => model.create(data));
+    return result.toJSON();
   }
 
   @Put('insertMany')
@@ -118,7 +122,8 @@ export class RealtimeController {
       throw new ForbiddenException('Forbidden Document Values');
     }
 
-    return this.executeOrThrow(() => model.insertMany(data));
+    const result = await this.executeOrThrow(() => model.insertMany(data));
+    return result.map((item) => item.toJSON());
   }
 
   // ██████╗ ███████╗ █████╗ ██████╗
@@ -142,7 +147,7 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.findOne(filter, null),
+      (model, filter) => model.findOne(filter, undefined, { lean: true }),
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -162,7 +167,7 @@ export class RealtimeController {
   ): Promise<Record<string, any>[]> {
     return this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.find(filter, null),
+      (model, filter) => model.find(filter, undefined, { lean: true }),
     );
   }
 
@@ -180,7 +185,7 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter: { _id } },
-      (model, filter) => model.findOne(filter),
+      (model, filter) => model.findOne(filter, undefined, { lean: true }),
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -255,7 +260,10 @@ export class RealtimeController {
       { req, modelName, operation: 'canUpdate', filter },
       async (model, filter) => {
         await this.validateOrThrow(model, 'partial', update);
-        return model.findOneAndUpdate(filter, update, { new: true });
+        return model.findOneAndUpdate(filter, update, {
+          new: true,
+          lean: true,
+        });
       },
     );
     if (!result) throw new NotFoundException();
@@ -278,7 +286,10 @@ export class RealtimeController {
       { req, modelName, operation: 'canUpdate', filter: { _id } },
       async (model, filter) => {
         await this.validateOrThrow(model, 'partial', update);
-        return model.findOneAndUpdate(filter, update, { new: true });
+        return model.findOneAndUpdate(filter, update, {
+          new: true,
+          lean: true,
+        });
       },
     );
     if (!result) throw new NotFoundException();
@@ -301,7 +312,7 @@ export class RealtimeController {
       { req, modelName, operation: 'canUpdate', filter },
       async (model, filter) => {
         await this.validateOrThrow(model, 'partial', replace);
-        return model.replaceOne(filter, replace, { new: true });
+        return model.replaceOne(filter, replace, { new: true, lean: true });
       },
     );
     if (!result) throw new NotFoundException();
@@ -324,7 +335,10 @@ export class RealtimeController {
       { req, modelName, operation: 'canUpdate', filter },
       async (model, filter) => {
         await this.validateOrThrow(model, 'partial', replace);
-        return model.findOneAndReplace(filter, replace, { new: true });
+        return model.findOneAndReplace(filter, replace, {
+          new: true,
+          lean: true,
+        });
       },
     );
     if (!result) throw new NotFoundException();
@@ -388,7 +402,7 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canDelete', filter },
-      (model, filter) => model.findOneAndDelete(filter),
+      (model, filter) => model.findOneAndDelete(filter, { lean: true }),
     );
 
     if (!result) throw new NotFoundException();
@@ -409,7 +423,7 @@ export class RealtimeController {
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canDelete', filter: { _id } },
-      (model, filter) => model.findOneAndDelete(filter),
+      (model, filter) => model.findOneAndDelete(filter, { lean: true }),
     );
     if (!result) throw new NotFoundException();
     return result;

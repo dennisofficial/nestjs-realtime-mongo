@@ -1,14 +1,9 @@
-import { plainToInstance, Transform } from 'class-transformer';
 import { initializeRealtimeMongo } from '@dl-tech/realtime-mongo-client';
 
 export class BaseMongo {
   _id!: string;
   __v!: number;
-
-  @Transform(({ value }) => new Date(value))
   created_at!: Date;
-
-  @Transform(({ value }) => new Date(value))
   updated_at!: Date;
 }
 
@@ -38,9 +33,5 @@ export const { databaseSocket, databaseRest } = initializeRealtimeMongo<
     return {
       id_token: 'eyzasdfasf...',
     };
-  },
-  deserializers: {
-    UserModel: (data: any): User => plainToInstance(User, data),
-    AdminUserModel: (data: any): Admin => plainToInstance(Admin, data),
   },
 });

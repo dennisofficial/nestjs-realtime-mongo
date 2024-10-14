@@ -10,5 +10,6 @@ export default defineConfig({
   dts: true,
   shims: true,
   skipNodeModulesBundle: true,
+  noExternal: ['@socket.io/devalue-parser', 'devalue'],
   clean: true,
 });

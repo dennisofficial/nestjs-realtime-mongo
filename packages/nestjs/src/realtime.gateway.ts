@@ -24,8 +24,17 @@ import { RealtimeAuthDto } from './dto/realtime.query';
 import { GuardService } from './services/guard.service';
 import { REALTIME_OPTIONS } from './realtime.constants';
 import type { RealtimeMongoOptions } from './realtime.options';
+import * as parser from '@socket.io/devalue-parser';
+import { devalueReducers, devalueRevivers } from './encoder';
+import { ObjectId } from 'mongodb';
 
-@WebSocketGateway({ namespace: 'database' })
+@WebSocketGateway({
+  namespace: 'database',
+  parser: {
+    Encoder: parser.Encoder.bind(null, devalueReducers),
+    Decoder: parser.Decoder.bind(null, devalueRevivers),
+  },
+})
 @UseFilters(RealtimeFilter)
 export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
@@ -72,7 +81,7 @@ export class RealtimeGateway
       const { modelName } = authDto._realtime;
       let filter = authDto._realtime.filter ?? {};
       if (authDto._realtime._id) {
-        filter._id = authDto._realtime._id;
+        filter._id = new ObjectId(authDto._realtime._id);
       }
 
       const model = this.databaseService.getModel(modelName);
@@ -99,8 +108,6 @@ export class RealtimeGateway
         return next(e);
       }
 
-      console.log(filter);
-
       client.data = { isDocument: !!authDto._realtime._id, model, filter };
 
       return next();
@@ -117,9 +124,12 @@ export class RealtimeGateway
     session.document_ids = new Set<string>(result.map(({ _id }) => `${_id}`));
 
     if (client.data.isDocument) {
-      client.emit('data', result[0] ?? null);
+      client.emit('data', result[0]?.toJSON() ?? null);
     } else {
-      client.emit('data', result);
+      client.emit(
+        'data',
+        result.map((item) => item.toJSON()),
+      );
     }
   }
 

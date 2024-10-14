@@ -178,9 +178,21 @@ importers:
 
   packages/client:
     dependencies:
+      '@dl-tech/realtime-mongo-encoder':
+        specifier: link:../encoder
+        version: link:../encoder
+      '@socket.io/component-emitter':
+        specifier: ^3.1.2
+        version: 3.1.2
+      '@socket.io/devalue-parser':
+        specifier: ^0.1.0
+        version: 0.1.0
       axios:
         specifier: ^1.7.7
         version: 1.7.7
+      devalue:
+        specifier: ^5.1.1
+        version: 5.1.1
       mongodb:
         specifier: ^6.9.0
         version: 6.9.0
@@ -206,15 +218,24 @@ importers:
 
   packages/nestjs:
     dependencies:
+      '@dl-tech/realtime-mongo-encoder':
+        specifier: link:../encoder
+        version: link:../encoder
       '@nestjs/mapped-types':
         specifier: ^2.0.5
         version: 2.0.5(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)
+      '@socket.io/devalue-parser':
+        specifier: ^0.1.0
+        version: 0.1.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
       class-validator:
         specifier: ^0.14.1
         version: 0.14.1
+      devalue:
+        specifier: ^5.1.1
+        version: 5.1.1
       mingo:
         specifier: ^6.4.15
         version: 6.4.15
@@ -1064,6 +1085,10 @@ packages:
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
 
+  '@socket.io/devalue-parser@0.1.0':
+    resolution: {integrity: sha512-UODtNxJ9zrQKDy7SE0bsbaGoCUqwDZQd5KkOLhi3SugniNUH2FMUP7q3niLMePFlh55F4sZ8gWkRylT5+852Ig==}
+    engines: {node: '>=10.0.0'}
+
   '@swc/cli@0.4.0':
     resolution: {integrity: sha512-4JdVrPtF/4rCMXp6Q1h5I6YkYZrCCcqod7Wk97ZQq7K8vNGzJUryBv4eHCvqx5sJOJBrbYm9fcswe1B0TygNoA==}
     engines: {node: '>= 16.14.0'}
@@ -1787,6 +1812,12 @@ packages:
   detect-libc@2.0.3:
     resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
     engines: {node: '>=8'}
+
+  devalue@4.3.3:
+    resolution: {integrity: sha512-UH8EL6H2ifcY8TbD2QsxwCC/pr5xSwPvv85LrLXVihmHVC3T3YqTCIwnR5ak0yO1KYqlxrPVOA/JVZJYPy2ATg==}
+
+  devalue@5.1.1:
+    resolution: {integrity: sha512-maua5KUiapvEwiEAe+XnlZ3Rh0GD+qI1J/nb9vrJc3muPXvcF/8gXYTWF76+5DAqHyDUtOIImEuo0YKE9mshVw==}
 
   diff@4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
@@ -4293,6 +4324,14 @@ snapshots:
 
   '@socket.io/component-emitter@3.1.2': {}
 
+  '@socket.io/devalue-parser@0.1.0':
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.3.7(supports-color@5.5.0)
+      devalue: 4.3.3
+    transitivePeerDependencies:
+      - supports-color
+
   '@swc/cli@0.4.0(@swc/core@1.7.26)(chokidar@3.6.0)':
     dependencies:
       '@mole-inc/bin-wrapper': 8.0.1
@@ -5053,6 +5092,10 @@ snapshots:
 
   detect-libc@2.0.3:
     optional: true
+
+  devalue@4.3.3: {}
+
+  devalue@5.1.1: {}
 
   diff@4.0.2: {}
 

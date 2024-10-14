@@ -1,6 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 import { Filter } from 'mongodb';
 import { RealtimeClientOptions } from './types';
+import * as parser from '@socket.io/devalue-parser';
+import { devalueReducers, devalueRevivers } from './encoder';
 
 interface EmitMap<R extends Record<string, any>> {
   query: (data: Filter<R>) => void;
@@ -24,19 +26,6 @@ export class RealtimeSocketClient<
   ModelMap extends Record<string, any> = Record<string, any>,
 > {
   constructor(private readonly options: RealtimeClientOptions<ModelMap>) {}
-
-  private deserialize = <ModelName extends keyof ModelMap>(
-    modelName: ModelName,
-    data: ModelMap[ModelName],
-  ): ModelMap[ModelName] => {
-    const deserializer = this.options.deserializers?.[modelName];
-
-    if (deserializer) {
-      return deserializer(data);
-    }
-
-    return data;
-  };
 
   private _subscribe = <
     ModelName extends keyof ModelMap,
@@ -71,6 +60,10 @@ export class RealtimeSocketClient<
           cb(baseObject);
         }
       },
+      parser: {
+        Encoder: parser.Encoder.bind(null, devalueReducers),
+        Decoder: parser.Decoder.bind(null, devalueRevivers),
+      },
     });
 
     socket.on('connect', () => {
@@ -95,7 +88,7 @@ export class RealtimeSocketClient<
     if (options?.isDocument) {
       // Handle document subscription
       socket.on('data', (data) => {
-        onChange(this.deserialize(modelName, data as R));
+        onChange(data);
       });
 
       socket.on('remove', () => {
@@ -103,11 +96,11 @@ export class RealtimeSocketClient<
       });
 
       socket.on('update', (data) => {
-        onChange(this.deserialize(modelName, data.data as R));
+        onChange(data.data);
       });
 
       socket.on('add', (data) => {
-        onChange(this.deserialize(modelName, data.data as R));
+        onChange(data.data);
       });
     } else {
       // Handle query subscription
@@ -116,9 +109,7 @@ export class RealtimeSocketClient<
       socket.on('data', (data) => {
         if (data && Array.isArray(data)) {
           cache.clear();
-          data.forEach((item: R) =>
-            cache.set(item._id, this.deserialize(modelName, item)),
-          );
+          data.forEach((item: R) => cache.set(item._id, item));
           onChange(Array.from(cache.values()) as D);
         }
       });
@@ -129,12 +120,12 @@ export class RealtimeSocketClient<
       });
 
       socket.on('update', (data) => {
-        cache.set(data._id, this.deserialize(modelName, data.data));
+        cache.set(data._id, data.data);
         onChange(Array.from(cache.values()) as D);
       });
 
       socket.on('add', (data) => {
-        cache.set(data._id, this.deserialize(modelName, data.data));
+        cache.set(data._id, data.data);
         onChange(Array.from(cache.values()) as D);
       });
     }
