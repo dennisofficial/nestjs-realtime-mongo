@@ -93,22 +93,24 @@ export class RealtimeGateway
       }
 
       // Validate rule guards
+      let guardFilter;
       try {
         const user = this.getUser(client);
-        const guardFilter = await this.realtimeService.verifyAccess(
+        guardFilter = await this.realtimeService.modifyUserFilter(
+          filter,
           user,
           model,
           'canRead',
         );
-
-        if (guardFilter) {
-          filter = this.realtimeService.mergeFilters(filter, guardFilter);
-        }
       } catch (e) {
         return next(e);
       }
 
-      client.data = { isDocument: !!authDto._realtime._id, model, filter };
+      client.data = {
+        isDocument: !!authDto._realtime._id,
+        model,
+        filter: guardFilter,
+      };
 
       return next();
     });

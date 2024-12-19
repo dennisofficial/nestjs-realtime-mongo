@@ -57,6 +57,7 @@ export class RealtimeService {
   /**
    * Verifies access permissions for the given operation on the model.
    *
+   * @param filter - the original User Filter
    * @param user - The Provided user.
    * @param model - The Mongoose model on which the operation is to be performed.
    * @param operation - The access control operation to verify (e.g., 'canRead', 'canCreate').
@@ -65,11 +66,12 @@ export class RealtimeService {
    *
    * @throws {ForbiddenException} - Thrown if access is explicitly denied by the guard.
    */
-  verifyAccess = async (
+  modifyUserFilter = async <D extends Record<string, any>>(
+    filter: FilterQuery<Record<string, any>>,
     user: Record<string, any> | null,
-    model: Model<Record<string, any>>,
+    model: Model<D>,
     operation: keyof RealtimeRuleGuard<Record<string, any>, Document>,
-  ): Promise<MongoQuery | null> => {
+  ): Promise<FilterQuery<D>> => {
     let baseFilter: FilterQuery<Record<string, any>> | undefined;
     if (model.baseModelName) {
       const baseGuard = await this.ruleService.invokeRules(
@@ -112,6 +114,6 @@ export class RealtimeService {
       return new MongoQuery(baseFilter);
     }
 
-    return null;
+    return filter;
   };
 }

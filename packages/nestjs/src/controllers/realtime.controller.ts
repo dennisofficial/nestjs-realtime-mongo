@@ -45,6 +45,7 @@ import {
   UpdateIdDto,
 } from '../dto/controller.dto';
 import { RealtimeEncoderInterceptor } from '../realtime-encoder.interceptor';
+import { Query as MongoQuery } from 'mingo';
 
 @Controller('database')
 @SetMetadata(METADATA_REALTIME_CONTROLLER, true)
@@ -81,13 +82,15 @@ export class RealtimeController {
     await this.validateOrThrow(model, 'full', data);
 
     const user = this.getUser(req);
-    const guardFilter = await this.realtimeService.verifyAccess(
+    const guardFilter = await this.realtimeService.modifyUserFilter(
+      {},
       user,
       model,
       'canCreate',
     );
 
-    if (guardFilter && !guardFilter.test(data)) {
+    const mingoFilter = new MongoQuery(guardFilter);
+    if (!mingoFilter.test(data)) {
       throw new ForbiddenException('Forbidden Document Values');
     }
 
@@ -112,13 +115,15 @@ export class RealtimeController {
     await this.validateOrThrow(model, 'full', data);
 
     const user = this.getUser(req);
-    const guardFilter = await this.realtimeService.verifyAccess(
+    const guardFilter = await this.realtimeService.modifyUserFilter(
+      {},
       user,
       model,
       'canCreate',
     );
 
-    if (guardFilter && !data.every((item) => guardFilter.test(item))) {
+    const mingoFilter = new MongoQuery(guardFilter);
+    if (!data.every((item) => mingoFilter.test(item))) {
       throw new ForbiddenException('Forbidden Document Values');
     }
 
@@ -138,16 +143,16 @@ export class RealtimeController {
     name: 'Find One',
     method: 'POST',
     folderName: 'Read',
-    body: { filter: {} },
+    body: { filter: {}, projection: {} },
   })
   async findOne(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { filter }: FilterDto,
+    @Body() { filter, projection }: FilterDto,
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.findOne(filter, undefined, { lean: true }),
+      (model, filter) => model.findOne(filter, projection, { lean: true }),
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -158,16 +163,16 @@ export class RealtimeController {
     name: 'Find Many',
     method: 'POST',
     folderName: 'Read',
-    body: { filter: {} },
+    body: { filter: {}, projection: {} },
   })
   async findMany(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { filter }: FilterDto,
+    @Body() { filter, projection }: FilterDto,
   ): Promise<Record<string, any>[]> {
     return this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter },
-      (model, filter) => model.find(filter, undefined, { lean: true }),
+      (model, filter) => model.find(filter, projection, { lean: true }),
     );
   }
 
@@ -176,16 +181,16 @@ export class RealtimeController {
     name: 'Find By ID',
     method: 'POST',
     folderName: 'Read',
-    body: { _id: '' },
+    body: { _id: '', projection: {} },
   })
   async findById(
     @Req() req: Request,
     @Query() { modelName }: RealtimeQuery,
-    @Body() { _id }: ObjectIdDto,
+    @Body() { _id, projection }: ObjectIdDto,
   ): Promise<Record<string, any>> {
     const result = await this.handleDatabaseOperation(
       { req, modelName, operation: 'canRead', filter: { _id } },
-      (model, filter) => model.findOne(filter, undefined, { lean: true }),
+      (model, filter) => model.findOne(filter, projection, { lean: true }),
     );
     if (!result) throw new NotFoundException();
     return result;
@@ -470,17 +475,14 @@ export class RealtimeController {
   ): Promise<T> {
     const model = this.databaseService.getModelOrThrow(modelName);
     const user = this.getUser(req);
-    const guardFilter = await this.realtimeService.verifyAccess(
+    const guardFilter = await this.realtimeService.modifyUserFilter(
+      filter,
       user,
       model,
       operation,
     );
 
-    if (guardFilter) {
-      this.realtimeService.mergeFilters(filter, guardFilter);
-    }
-
-    return this.executeOrThrow(() => dbOperation(model, filter));
+    return this.executeOrThrow(() => dbOperation(model, guardFilter));
   }
 
   /**
