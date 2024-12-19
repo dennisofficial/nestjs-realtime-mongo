@@ -3,6 +3,7 @@ import {
   DataArrayDto,
   DataSingleDto,
   FilterDto,
+  FilterObjectIdDto,
   ObjectIdDto,
   RealtimeClientOptions,
   UpdateDto,
@@ -304,7 +305,7 @@ export class RealtimeRestClient<
    */
   findById = async <ModelName extends keyof ModelMap>(
     modelName: ModelName,
-    payload: ObjectIdDto,
+    payload: FilterObjectIdDto<ModelMap[ModelName]>,
   ): Promise<ModelMap[ModelName] | null> => {
     const response = await this.axiosInstance.post(
       'database/findById',

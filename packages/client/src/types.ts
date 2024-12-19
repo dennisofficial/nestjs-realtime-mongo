@@ -1,12 +1,18 @@
-import { FilterQuery, UpdateQuery } from 'mongoose';
+import { FilterQuery, ProjectionType, UpdateQuery } from 'mongoose';
 import { AxiosHeaders } from 'axios';
 
 export interface ObjectIdDto {
   _id: string;
 }
 
+export interface FilterObjectIdDto<T extends Record<string, any>> {
+  _id: string;
+  projection?: ProjectionType<T>;
+}
+
 export interface FilterDto<T extends Record<string, any>> {
   filter: FilterQuery<T>;
+  projection?: ProjectionType<T>;
 }
 
 export interface DataSingleDto<T extends Record<string, any>> {
