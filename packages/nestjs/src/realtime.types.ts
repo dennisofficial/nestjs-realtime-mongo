@@ -36,19 +36,19 @@ export interface DiscriminatorMapping {
 }
 
 export type DbSocket = Socket<ListenMap, EmitMap, DefaultEventsMap, SocketData>;
-export type RealtimeMongoEvent =
-  | ChangeStreamInsertDocument
-  | ChangeStreamUpdateDocument
-  | ChangeStreamReplaceDocument
-  | ChangeStreamDeleteDocument;
+export type RealtimeMongoEvent<T extends Document = Document> =
+  | ChangeStreamInsertDocument<T>
+  | ChangeStreamUpdateDocument<T>
+  | ChangeStreamReplaceDocument<T>
+  | ChangeStreamDeleteDocument<T>;
 
 export interface RealtimeMongoSession {
   client: DbSocket;
   document_ids: Set<string>;
 }
 
-export abstract class RealtimeEventHandler {
-  abstract onChangeEvent(data: RealtimeMongoEvent): void | Promise<void>;
+export abstract class RealtimeEventHandler<T extends Document = Document> {
+  abstract onChangeEvent(data: RealtimeMongoEvent<T>): void | Promise<void>;
 }
 
 export abstract class RealtimeRuleGuard<
